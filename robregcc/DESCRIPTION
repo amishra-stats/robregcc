@@ -1,0 +1,14 @@
+Package: robregcc
+Type: Package
+Title: Robust Regression with Compositional Covariates
+Version: 1.0
+Date: 2019-07-25
+Author: Aditya Mishra [aut, cre], Christian Mueller [aut, cre]
+Maintainer: Aditya Mishra <amishra@flatironinstitute.org>
+Description: The package provides access to the functions implementing robust regression model with compositional covariates. It identify outlier which do not satisfy linear model assumption.  
+Depends: R (>= 3.6.0),stats, utils
+License: GPL (>= 3.0)
+Imports: Rcpp, MASS, magrittr, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo
+NeedsCompilation: yes
+RoxygenNote: 6.1.1
