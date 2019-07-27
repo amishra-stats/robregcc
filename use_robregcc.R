@@ -1,51 +1,7 @@
-# Robust regression with compositional covariates
-
-
-## Getting Started
-
-We have implemented the algorithm performing the robust regression with compositional covariates in the R package **robregcc**. Currently, GitHub host a development version of the package. Here we demonstrate the usage of functions available for the robust model fitting and outlier detection.
-
-### Package installation
-
-##### Dependency
-
-```
-## For installation
-install.packages("MASS")
-install.packages("magrittr")
-
-install.packages("Rcpp")
-install.packages("RcppArmadillo")
-
-
-## Package for visualization:
-install.packages("ggplot2")
-install.packages("reshape2")
-```
-
-
-#### Install
-
-Please download the package from the host. Mac/Linux user should download source file "robregcc_1.0.tar.gz".  Windows user should download binary file "robregcc_1.0.tar.gz". 
-In the instruction given below, specify "download_location" accordingly.
-
-```
-## Windows user:  Binary format of the package
-install.packages("download_location/robregcc_1.0.tgz", repos = NULL, type = "source")
-
-## Mac/linux user: Use source file to install the package
-install.packages("download_location/robregcc_1.0.tar.gz", repos = NULL, type = "source")
-```
-
-
-## Simulation examples:
-
-Here we demonstrate the effectiveness of the proposed procedure on the simulated data. Please execute the documented code below to understand the required robust analysis. 
-
-See the output of the example code in "testRobRegCC.pdf".
-
-
-```
+## Title: Robust regression with compositional covariates
+## Author: Aditya Mishra
+## Date: July 27, 2019
+## Description: We demonstrate the usage of functions available for robust model fitting and outlier detection.
 ## -----------------------------------------------------------------------------
 
 ## Load package
@@ -59,11 +15,8 @@ library(magrittr)
 p <- 80                             # number of predictors  
 n <- 300                            # number of sample   
 O <- 0.15*n                         # number of outlier, e.g. 15% of observation    
-L <- 1                              # indicator variable for outlier type, 
-                                    # L = {0,1} => leveraged {no, yes}
-                                    
-# generate outlier by shifting "O"observation by amount equals to shFac times 
-# true error variance sigma.
+L <- 1                              # indicator variable for outlier type, L = {0,1} => leveraged {no, yes}
+# generate outlier by shifting "O"observation by amount equals to shFac times true error variance sigma.
 # shFac = {6,8} corresponds to {moderate, high} outlier 
 shFac <- 6                          
 ngrp <- 4                           # number of sub-composition
@@ -148,7 +101,7 @@ fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)
 control <- robregcc_option()
 beta.wt <- fit.init$betaR           # Set weight for model parameter beta
 beta.wt[1] <- 0
-control$gamma = 2                   # gamma for constructing  weighted penalty
+control$gamma = 1                   # gamma for constructing  weighted penalty
 control$spb = 40/p                  # fraction of maximum non-zero model parameter beta
 control$outMiter = 1000             # Outer loop iteration
 control$inMiter = 3000              # Inner loop iteration
@@ -245,8 +198,6 @@ par(mfrow=c(1,1))
 
 
 
-
-
 #--------------------------------------------------------------
 ## True/Estimated parameter comparison
 
@@ -287,13 +238,7 @@ ggplot(data=df, aes(x=Index, y=value, fill=Comparison)) +
   theme_bw() + theme(legend.position="bottom") + ggtitle('Hard penalty') +
   theme(plot.title = element_text(hjust = 0.5))
 
-```
-
-
-## Queries
-Please contact authors and creators for any queries related to using the package **robregcc**. 
 
 
 
--   Aditya Mishra: [mailto](mailto:amishra@flatironinstitute.org)
--   Christian Mueller: [mailto](mailto:cmueller@flatironinstitute.org)
+
