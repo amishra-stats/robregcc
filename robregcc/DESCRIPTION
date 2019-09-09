@@ -8,7 +8,7 @@ Authors@R: c(person(given = "Aditya", family = "Mishra", role = c("aut", "cre"),
              person(given = "Christian", family = "Muller", role = "ctb"))
 Maintainer: Aditya Mishra <amishra@flatironinstitute.org>
 Description: We implement the algorithm estimating the parameters of the robust regression model with compositional covariates. The model simultaneously treats outliers and provides reliable parameter  estimates. 
-Depends: R (>= 3.6.0), stats, utils
+Depends: R (>= 3.4.0), stats, utils
 License: GPL (>= 3.0)
 LazyData: true
 Imports: Rcpp (>= 0.12.0), MASS, magrittr, graphics 
