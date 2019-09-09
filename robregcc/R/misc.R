@@ -108,7 +108,6 @@ getscsfun <- function(Xa, ya, alp0 = 0.4, b1 = 0.25, cc1 = 2.937) {
 #' @return
 #'   \item{beta}{Model parameter estimate}
 #'   \item{scale}{scale estimate}
-#' @export
 #' @importFrom MASS ginv
 #' @importFrom stats median
 #' @import magrittr
@@ -231,7 +230,7 @@ fnk <- function(kkkt, p) { ## Gradient of 'fr'
 ## Truncated loss function for calculatin standard deviations
 truncLoss1 <- function(r) {
   r. <- r - median(r)
-  sigmae <- 1.483 * median(abs(r.))
+  sigmae <- 1.483 * median(abs(r.))  ## MAD : median absolute deviation
   sigmae <- (1.345 * sigmae)^2
   r2 <- r.^2
   gind <- r2 < sigmae

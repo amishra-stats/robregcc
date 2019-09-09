@@ -154,8 +154,6 @@ robregcc_option <- function(maxiter = 10000, tol = 1e-10, nlam = 100,
 #' @return
 #'   \item{beta}{model parameter estimate}
 #' @export
-#' @import Rcpp
-#' @import RcppArmadillo
 #' @importFrom stats qnorm
 #' @useDynLib robregcc
 #' @examples
@@ -222,8 +220,6 @@ classo <- function(Xt, y, C, we = NULL,
 #'   \item{lampath}{sequence of fitted lambda)}
 #'   \item{k0}{scaling factor}
 #' @export
-#' @import Rcpp
-#' @import RcppArmadillo
 #' @importFrom utils modifyList
 #' @useDynLib robregcc
 #' @examples
@@ -335,23 +331,27 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
   }
 
   if (penalty.index == 2) {
-    shwt <- c(beta.wt, gamma.wt * sqrt(1 - diag(h2)))
+    # shwt <- c(beta.wt, gamma.wt * sqrt(1 - diag(h2)))
+    shwt <- c(beta.wt, gamma.wt * sqrt(1 - 0))
     shwt <- shwt * sqrt(1 + log(n))
   }
 
   if (penalty.index == 3) {
-    # shwt = c(rep(max(abs(param.ini[1:p])),p), rep(max(abs(param.ini[(p+1):np])),n) )
+    # shwt = c(rep(max(abs(param.ini[1:p])),p), 
+    # rep(max(abs(param.ini[(p+1):np])),n) )
     # shwt = abs(param.ini)
     # shwt[shwt!=0] <- (shwt[shwt!=0])^(-control$gamma)
     # shwt[shwt==0] <- .Machine$integer.max
-    shwt <- c(beta.wt, gamma.wt * sqrt(1 - diag(h2))) #
+    # shwt <- c(beta.wt, gamma.wt * sqrt(1 - diag(h2))) #
+    shwt <- c(beta.wt, gamma.wt * sqrt(1 - 0))
     shwt <- sqrt(shwt * sqrt(1 + log(n)))
   }
 
   if (penalty.index == 4) {
     shwt <- abs(c(beta.wt / sfac, gamma.wt / sqrt(n)))
     shwt[shwt != 0] <- (shwt[shwt != 0])^(-control$gamma)
-    # shwt = c(rep(max(abs(param.ini[1:p])),p), rep(max(abs(param.ini[(p+1):np])),n) )
+    # shwt = c(rep(max(abs(param.ini[1:p])),p), 
+    # rep(max(abs(param.ini[(p+1):np])),n) )
     # shwt = abs(param.ini)
     # shwt[shwt!=0] <- (shwt[shwt!=0])^(-control$gamma)
     # shwt[shwt==0] <- .Machine$integer.max
@@ -371,6 +371,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 
   tm <- abs(shwt) > 0
   lmax <- max(abs(c(crossprod(X, y), sqrt(1) * y)[tm] / shwt[tm]))
+  #save(list = ls(), file = "xxx.rda")
   lampath <- exp(seq(log(lmax * control$lmaxfac),
     log(lmax * control$lminfac),
     length.out = control$nlam
@@ -548,8 +549,6 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #'   \item{X}{predictors}
 #'   \item{y}{response}
 #' @export
-#' @import Rcpp
-#' @import RcppArmadillo
 #' @importFrom utils modifyList
 #' @importFrom MASS ginv
 #' @useDynLib robregcc
@@ -766,8 +765,6 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
 #'   \item{betaf}{TModel parameter estimate}
 #'   \item{residuals}{residual estimate}
 #' @export
-#' @import Rcpp
-#' @import RcppArmadillo
 #' @import magrittr
 #' @importFrom MASS ginv
 #' @useDynLib robregcc
@@ -863,8 +860,6 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 #'   \item{betaf}{TModel parameter estimate}
 #'   \item{residuals}{residual estimate}
 #' @export
-#' @import Rcpp
-#' @import RcppArmadillo
 #' @import magrittr
 #' @importFrom MASS ginv
 #' @useDynLib robregcc

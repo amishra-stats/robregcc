@@ -7,6 +7,7 @@
 
 using namespace arma;
 using namespace Rcpp;
+using namespace std;
 
 // This is a simple example of exporting a C++ function to R. You can
 // source this function into an R session using the Rcpp::sourceCpp
@@ -207,7 +208,7 @@ Rcpp::List classol2(arma::mat Xt, arma::vec y, arma::mat C, arma::vec we, double
   int i,n = Xt.n_rows, p = Xt.n_cols, maxiter = control["maxiter"], kk = C.n_rows;
   Rcpp::List out;
   mat sfac = stddev(Xt);
-  double mu,tol = control["tol"]; //nu = control["nu"],
+  double tol = control["tol"]; //mu, nu = control["nu"],
   for(i=0; i < p; i++){
     if(sfac(0,i)!=0) sfac(0,i) = 1/sfac(0,i); else sfac(0,i) = 1;
   }
@@ -229,7 +230,7 @@ Rcpp::List classol2(arma::mat Xt, arma::vec y, arma::mat C, arma::vec we, double
     ssq2=ssq;
     // cout << ssq << std::endl;
     lam = we*ssq2; lam = s4 + lam;
-    mu =  control["mu"]; psi = zeros<vec>(kk);
+    psi = zeros<vec>(kk); // mu =  control["mu"];
     t5 = U4*diagmat(1/lam)*U4.t();
     // cout << lam << std::endl;
     // cout << sum(U4) << std::endl;
@@ -430,7 +431,7 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
     mu = control["mu"]; psi = psi*0; psi1 = psi1*0;
     spgamma = 1;spbeta = 1;
     //  while loop 
-    while ((errout > outtol) && (kk < outMiter) && (0< spgamma < spn) && (0 < spbeta < spb) ){
+    while ((errout > outtol) && (kk < outMiter) && (0 < spgamma) && (spgamma < spn) && (0 < spbeta) && (spbeta < spb) ){
       errin = 1e6; j = 0;
       xy2 = xy1 - C2.t()*psi;
       
@@ -464,7 +465,7 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
         if((j>2) && ( errin < tol) ) { break;}
       }
       
-      spgamma = nzcount(gammau); mu =mu*nu;
+      spgamma = nzcount(gammau); mu = mu*nu;
       tm3 = find(betau!=0); spbeta = tm3.n_elem;
       psi1 = C.cols(tm3)*betau(tm3);
       psi = psi + psi1;

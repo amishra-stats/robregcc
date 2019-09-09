@@ -33,6 +33,9 @@
 
 
 
-
-PKG_LIBS = $(FLIBS) $(LAPACK_LIBS) $(BLAS_LIBS)
+CXX = g++
+CXX11 = g++
+CXX_STD = CXX11
+PKG_CXXFLAGS = -I../inst/include 
+PKG_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 
