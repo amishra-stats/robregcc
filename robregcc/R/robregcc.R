@@ -749,7 +749,7 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
 
 
 
-#' Principal sensitive component analysis with compositional covariates in non-sparse setting.
+#' Principal sensitivity component analysis with compositional covariates in non-sparse setting.
 #'
 #' Produce model and its residual estimate based in PCS analysis.
 #'
@@ -842,7 +842,7 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 
 
 
-#' Principal sensitive component analysis with compositional covariates in sparse setting.
+#' Principal sensitivity component analysis with compositional covariates in sparse setting.
 #'
 #' Produce model and its residual estimate based on PCS analysis.
 #'
