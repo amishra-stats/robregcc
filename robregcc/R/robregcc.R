@@ -458,8 +458,8 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
   sderr[sderr == 0] <- NA
 
 
-  dm1 <- min(which(avger == (min(avger, na.rm = T)), arr.ind = T))
-  dm2 <- min(which(avger <= avger[dm1] + 1 * sderr[dm1]))
+  dm1 <- max(which(avger == (min(avger, na.rm = T)), arr.ind = T))
+  dm2 <- max(which(avger <= avger[dm1] + 1 * sderr[dm1]))
   out$selInd <- c(dm1, dm2)
   out$beta0 <- out$betapath[, out$selInd]
   out$gamma0 <- out$gammapath[, out$selInd]
@@ -698,8 +698,8 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
   sderr <- sderr * out$gind
   sderr[sderr == 0] <- NA
 
-  dm1 <- min(which(avger == (min(avger, na.rm = T)), arr.ind = T))
-  dm2 <- min(which(avger <= avger[dm1] + 1 * sderr[dm1]))
+  dm1 <- max(which(avger == (min(avger, na.rm = T)), arr.ind = T))
+  dm2 <- max(which(avger <= avger[dm1] + 1 * sderr[dm1]))
   out$selInd <- c(dm1, dm2)
   out$beta0 <- out$betapath[, out$selInd]
   out$gamma0 <- out$gammapath[, out$selInd]
