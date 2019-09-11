@@ -2,7 +2,7 @@
 % Please edit documentation in R/robregcc.R
 \name{cpsc_nsp}
 \alias{cpsc_nsp}
-\title{Principal sensitive component analysis with compositional covariates in non-sparse setting.}
+\title{Principal sensitivity component analysis with compositional covariates in non-sparse setting.}
 \usage{
 cpsc_nsp(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
   C = NULL, control = list())

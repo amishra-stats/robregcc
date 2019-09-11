@@ -87,7 +87,7 @@ cc1 =  1.567                # corresponding model parameter
 set.seed(example_seed)      # unique seed
 
 # control parameter for intialization method
-control <- robregcc_option(maxiter=100,tol = 1e-4,lminfac = 1e-7)
+control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 
 # intialization
 fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)  
@@ -101,7 +101,7 @@ fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)
 control <- robregcc_option()
 beta.wt <- fit.init$betaR           # Set weight for model parameter beta
 beta.wt[1] <- 0
-control$gamma = 1                   # gamma for constructing  weighted penalty
+control$gamma = 2                   # gamma for constructing  weighted penalty
 control$spb = 40/p                  # fraction of maximum non-zero model parameter beta
 control$outMiter = 1000             # Outer loop iteration
 control$inMiter = 3000              # Inner loop iteration
@@ -109,7 +109,7 @@ control$nlam = 50                   # Number of tuning parameter lambda to be ex
 control$lmaxfac = 1                 # Parameter for constructing sequence of lambda
 control$lminfac = 1e-8              # Parameter for constructing sequence of lambda 
 control$tol = 1e-20;                # tolrence parameter for converging [inner  loop]
-control$out.tol = 1e-16             # tolerence parameter for convergence [outer loop]
+control$out.tol = 1e-20             # tolerence parameter for convergence [outer loop]
 control$kfold = 5                   # number of fold of crossvalidation
 
 
@@ -132,8 +132,8 @@ fit.soft <- robregcc_sp(Xt,y,C, beta.init=NULL, gamma.init = NULL,
 # Robust regression using hard thresholding penalty
 control$lmaxfac = 1e2               # Parameter for constructing sequence of lambda
 control$lminfac = 1e-3              # Parameter for constructing sequence of lambda
-fit.hard <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaf, 
-                        gamma.init = fit.init$residuals,
+fit.hard <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaR, 
+                        gamma.init = fit.init$residualR,
                         beta.wt=bw, gamma.wt = NULL,
                         control = control, penalty.index = 3, 
                         alpha = 0.95)
@@ -174,21 +174,21 @@ residuals(fit.hard)
 par(mfrow=c(1,3))
 plot_path(fit.ada)
 plot_cv(fit.ada)
-plot_resid(fit.ada)
+plot_resid.robregcc(fit.ada,type = 0, s = 1)
 
 
 # [soft]
 par(mfrow=c(1,3))
 plot_path(fit.soft)
 plot_cv(fit.soft)
-plot_resid(fit.soft)
+plot_resid.robregcc(fit.soft,type = 0, s = 1)
 #title(sub ='[Soft]: Solution path, Cross-validation error, residual')
 
 # [Hard]
 par(mfrow=c(1,3))
 plot_path(fit.hard)
 plot_cv(fit.hard)
-plot_resid(fit.hard)
+plot_resid.robregcc(fit.hard,type = 0, s = 1)
 #title(sub ='[Hard]: Solution path, Cross-validation error, residual')
 par(mfrow=c(1,1))
 
