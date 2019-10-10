@@ -20,8 +20,12 @@ S3 methods plotting crossvalidation error using the object obtained from \code{r
 }
 \examples{
  
+ 
 \dontrun{
-### specify examples here to be shown in the package:
-print("Examples")
+# fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+
+plot_cv(fit.ada)
+plot_cv(fit.soft)
+plot_cv(fit.hard)
 }
 }

@@ -64,8 +64,10 @@ The model approach use scaled lasoo approach for model selection.
 }
 \examples{
  
-\dontrun{
-### specify examples here to be shown in the package:
-print("Examples")
-}
+rm(list=ls())
+library(robregcc)
+# default options
+control_default = robregcc_option()
+# manual options
+control_manual <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 }

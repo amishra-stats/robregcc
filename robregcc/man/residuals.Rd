@@ -3,7 +3,7 @@
 \name{residuals}
 \alias{residuals}
 \alias{residuals.robregcc}
-\title{Extract residuals estimate from the robregcc fitted object}
+\title{Extract residuals estimate from the sparse version of the robregcc fitted object.}
 \usage{
 \method{residuals}{robregcc}(object, ...)
 }
@@ -17,4 +17,13 @@ residuals estimate
 }
 \description{
 Robust residuals estimate
+}
+\examples{
+ 
+\dontrun{
+# fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+residuals(fit.ada)
+residuals(fit.soft)
+residuals(fit.hard)
+}
 }

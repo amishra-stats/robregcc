@@ -12,9 +12,13 @@
 #' @return plot estimated residual 
 #' @export
 #' @examples  
+#' @examples  
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' # fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+#' 
+#' plot_resid.robregcc(fit.ada)
+#' plot_resid.robregcc(fit.soft)
+#' plot_resid.robregcc(fit.hard)
 #' }
 plot_resid <- function(object, type = 0,  s = 1) {
   NextMethod("plot_resid", object, type, s)
@@ -55,8 +59,11 @@ plot_resid.robregcc = function(object, type = 1, s = 1) {
 #' @export
 #' @examples  
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' # fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+#' 
+#' plot_path(fit.ada)
+#' plot_path(fit.soft)
+#' plot_path(fit.hard)
 #' }
 plot_path = function(object, ptype = 0) {
   NextMethod("plot_path", object,  ptype = 0)
@@ -117,9 +124,13 @@ plot_path.robregcc <- function(object, ptype = 0) {
 #' @return generate cv error plot
 #' @export
 #' @examples  
+#' @examples  
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' # fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+#' 
+#' plot_cv(fit.ada)
+#' plot_cv(fit.soft)
+#' plot_cv(fit.hard)
 #' }
 plot_cv = function(object) {
   NextMethod("plot_cv", object)

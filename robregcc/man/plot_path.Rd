@@ -23,7 +23,10 @@ S3 methods plotting solution path of model parameter and mean shift using the ob
 \examples{
  
 \dontrun{
-### specify examples here to be shown in the package:
-print("Examples")
+# fit.ada, fit.soft, fit.hard are fitted object from the sparse version of the robregcc model
+
+plot_path(fit.ada)
+plot_path(fit.soft)
+plot_path(fit.hard)
 }
 }

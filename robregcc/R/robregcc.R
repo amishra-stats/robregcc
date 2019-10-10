@@ -22,10 +22,88 @@ if (getRversion() >= "3.6.0") utils::globalVariables(c("."))
 #' @importFrom stats sd
 #' @export
 #' @examples  
-#' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' ## Simulation example:
+#' 
+#' rm(list=ls())
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' ## n: sample size 
+#' ## p: number of predictors
+#' ## o: fraction of observations as outliers
+#' ## L: {0,1} => leveraged {no, yes}, indicator variable for outlier type
+#' ## shFac: multiplicative factor of true standard deviation by which O, 
+#' ##         i.e., outliers fraction of observations are shifted. 
+#' ## ngrp: number of subgroup in the model 
+#' ## snr: noise to signal ratio for computing true standard deviation of error 
+#' 
+#' p <- 80                            
+#' n <- 300                           
+#' o <- 0.10                            
+#' L <- 1                              
+#' shFac <- 6       # shFac = {6,8} corresponds to {moderate, high} outlier 
+#' ngrp <- 4                         
+#' snr <- 3   
+#' sp_beta <- 1
+#' 
+#' # Set seed for reproducibility 
+#' example_seed <- 2*p+1               
+#' set.seed(example_seed) 
+#' 
+#' ## 1. coefficient and subcomposition matrix C
+#' if(sp_beta == 1){         ## sparse model coefficient matrix 
+#'   #' subcomposition matrix C
+#'   C1 <- matrix(0,ngrp,23)
+#'   tind <- c(0,10,16,20,23)
+#'   for(ii in 1:ngrp)
+#'     C1[ii,(tind[ii]+1):tind[ii+1]] <- 1
+#'   C <- matrix(0,ngrp,p)
+#'   C[,1:ncol(C1)] <- C1            
+#'   
+#'   
+#'   # model coefficient beta; Follow examples from [Pixu Shi 2016]
+#'   beta <- c(1, - 0.8, 0.4, 0, 0, - 0.6, 0, 0, 0, 0, -1.5, 
+#'             0, 1.2, 0, 0, 0.3)
+#'   beta <- c(beta,rep(0,p-length(beta)))
+#'   tcrossprod(C,t(beta)) ##' sanity check
+#' }  else if(sp_beta == 0) { ## non sparse model coefficient matrix 
+#'   # subcomposition matrix C
+#'   j <- 1; C <- matrix(0,ngrp,p)
+#'   for(ii in 1:ngrp){
+#'     tv <-  min(c(round(ii*p/ngrp),p))
+#'     C[ii,j:tv] <- 1
+#'     j <- tv+1
+#'   }
+#'   
+#'   # model coefficient beta;
+#'   beta <- sample(c(1,-1),p,replace = T)*runif(p,.3,.4)
+#'   beta <- svd(t(C))$u %>% tcrossprod() %>% 
+#'     subtract(diag(p),.) %>% 
+#'     tcrossprod(.,t(beta))
+#'   tcrossprod(C,t(beta)) ## sanity check
 #' }
+#' # number of outliers
+#' O <- o*n  
+#' 
+#' ## 2. simulate response and predictor matrix, i.e., X, y
+#' Sigma  <- 1:p %>% outer(.,.,'-') %>% abs(); Sigma  <- 0.5^Sigma
+#' data.case <- vector("list",1)
+#' data.case <- robregcc_sim(n,beta,O = O,Sigma,levg = L, snr,shft = shFac,0,
+#'                           C,out=data.case)
+#' 
+#' X <- data.case$X                          # predictor matrix
+#' y <- data.case$y                          # model response 
+#' 
+#' # if(sp_beta == 1){ 
+#' #   simulate_robregcc_sp <- list(X=X,y=y,C = C)
+#' #   save(simulate_robregcc_sp, file = "data/simulate_robregcc_sp.RData")
+#' # }
+#' # if(sp_beta == 0){ 
+#' #   simulate_robregcc_nsp <- list(X=X,y=y,C = C)
+#' #   save(simulate_robregcc_nsp, file = "data/simulate_robregcc_nsp.RData")
+#' # }
+#' @references
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
 robregcc_sim <- function(n, betacc, O, Sigma, levg, snr,
                          shft, m, C, out = list()) {
   out$p <- length(betacc)
@@ -39,12 +117,6 @@ robregcc_sim <- function(n, betacc, O, Sigma, levg, snr,
     rep(0, out$p - 5)
   ), Sigma))
   if (out$L == 1) {
-    # levobs <- getLevObs(x,C)
-    # x[1:round(out$O/2),] <- tcrossprod(rep(1,round(out$O/2)),levobs)
-    # levobs <- getLevObs(x,round(out$O/2))
-    # x[1:round(out$O/2),] <- getLevObs(x,round(out$O/2))
-    # x[1:round(out$O),] <- getLevObs(x,round(out$O))
-    # x[1:round(out$O),] <- getLevObs(x,round(out$O),C)
     x[1:round(out$O / 2), ] <- getLevObs(x, round(out$O / 2), C)
   }
   x <- x %>%
@@ -113,10 +185,12 @@ robregcc_sim <- function(n, betacc, O, Sigma, levg, snr,
 #' @return a list of controling parameter.
 #' @export
 #' @examples  
-#' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
-#' }
+#' rm(list=ls())
+#' library(robregcc)
+#' # default options
+#' control_default = robregcc_option()
+#' # manual options
+#' control_manual <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 robregcc_option <- function(maxiter = 10000, tol = 1e-10, nlam = 100,
                             out.tol = 1e-8,
                             lminfac = 1e-8, lmaxfac = 10, mu = 1,
@@ -155,12 +229,35 @@ robregcc_option <- function(maxiter = 10000, tol = 1e-10, nlam = 100,
 #'   \item{beta}{model parameter estimate}
 #' @export
 #' @importFrom stats qnorm
+#' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples
-#' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
-#' }
+#' rm(list=ls())
+#' 
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' data(simulate_robregcc_sp)
+#' X <- simulate_robregcc_sp$X;
+#' y <- simulate_robregcc_sp$y
+#' C <- simulate_robregcc_sp$C
+#' n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+#' 
+#' # Predictor transformation due to compositional constraint:
+#' # Equivalent to performing centered log-ratio transform 
+#' Xt <- svd(t(C))$u %>% tcrossprod() %>% subtract(diag(p),.) %>% crossprod(t(X),.)
+#' #
+#' Xm <- colMeans(Xt)
+#' Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+#' mean.y <- mean(y)
+#' y <- y - mean.y                           # centering of response 
+#' Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+#' C <- cbind(0,C)                           # accounting for intercept in constraint
+#' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+#' 
+#' # Non-robust regression, [Pixu Shi 2016]
+#' control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)
+#' fit.nr <- classo(Xt, y, C, we = bw, type = 1, control = control) 
 #' @references
 #' Shi, P., Zhang, A. and Li, H., 2016. \emph{Regression analysis for microbiome compositional data. The Annals of Applied Statistics}, 10(2), pp.1019-1040.
 classo <- function(Xt, y, C, we = NULL,
@@ -213,6 +310,7 @@ classo <- function(Xt, y, C, we = NULL,
 #' @param control a list of internal parameters controlling the model fitting
 #' @param penalty.index a vector of length 2 specifying type of penalty for model parameter and shift parameter respectively. 1, 2, 3 corresponding to adaptive, soft and hard penalty
 #' @param alpha elastic net penalty
+#' @param verbose TRUE/FALSE for showing progress of the cross validation
 #' @return
 #'   \item{Method}{Type of penalty used}
 #'   \item{betapath}{model parameter estimate along solution path}
@@ -221,17 +319,92 @@ classo <- function(Xt, y, C, we = NULL,
 #'   \item{k0}{scaling factor}
 #' @export
 #' @importFrom utils modifyList
+#' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' rm(list=ls())
+#' 
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' data(simulate_robregcc_sp)
+#' X <- simulate_robregcc_sp$X;
+#' y <- simulate_robregcc_sp$y
+#' C <- simulate_robregcc_sp$C
+#' n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+#' 
+#' # Predictor transformation due to compositional constraint:
+#' # Equivalent to performing centered log-ratio transform 
+#' Xt <- svd(t(C))$u %>% tcrossprod() %>% subtract(diag(p),.) %>% crossprod(t(X),.)
+#' #
+#' Xm <- colMeans(Xt)
+#' Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+#' mean.y <- mean(y)
+#' y <- y - mean.y                           # centering of response 
+#' Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+#' C <- cbind(0,C)                           # accounting for intercept in constraint
+#' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+#' 
+#' example_seed <- 2*p+1               
+#' set.seed(example_seed) 
+#' 
+#' # Breakdown point for tukey Bisquare loss function 
+#' b1 = 0.5                    # 50% breakdown point
+#' cc1 =  1.567                # corresponding model parameter
+#' # b1 = 0.25; cc1 =  2.937   
+#' 
+#' # Initialization [PSC analysis for compositional data]
+#' control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
+#' fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control) 
+#' 
+#' # Robust procedure
+#' # control parameters
+#' control <- robregcc_option()
+#' beta.wt <- fit.init$betaR           # Set weight for model parameter beta
+#' beta.wt[1] <- 0
+#' control$gamma = 2                   # gamma for constructing  weighted penalty
+#' control$spb = 40/p                  # fraction of maximum non-zero model parameter beta
+#' control$outMiter = 1000             # Outer loop iteration
+#' control$inMiter = 3000              # Inner loop iteration
+#' control$nlam = 50                   # Number of tuning parameter lambda to be explored
+#' control$lmaxfac = 1                 # Parameter for constructing sequence of lambda
+#' control$lminfac = 1e-8              # Parameter for constructing sequence of lambda 
+#' control$tol = 1e-20;                # tolrence parameter for converging [inner  loop]
+#' control$out.tol = 1e-16             # tolerence parameter for convergence [outer loop]
+#' control$kfold = 5                   # number of fold of crossvalidation
+#' 
+#' 
+#' # Robust regression using adaptive elastic net penalty [case III, Table 1]
+#' fit.ada <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaR, 
+#'                        gamma.init = fit.init$residualR,
+#'                        beta.wt=abs(beta.wt), 
+#'                        gamma.wt = abs(fit.init$residualR),
+#'                        control = control, 
+#'                        penalty.index = 1, alpha = 0.95) 
+#'                        
+#' # Robust regression using lasso penalty [Huber equivalent]   [case II, Table 1]
+#' fit.soft <- robregcc_sp(Xt,y,C, beta.init=NULL, gamma.init = NULL,
+#'                         beta.wt=bw, gamma.wt = NULL,
+#'                         control = control, penalty.index = 2, 
+#'                         alpha = 0.95)
+#' 
+#' 
+#' # Robust regression using hard thresholding penalty [case I, Table 1]
+#' control$lmaxfac = 1e2        # Parameter for constructing sequence of lambda
+#' control$lminfac = 1e-3       # Parameter for constructing sequence of lambda
+#' fit.hard <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaf, 
+#'                         gamma.init = fit.init$residuals,
+#'                         beta.wt=bw, gamma.wt = NULL,
+#'                         control = control, penalty.index = 3, 
+#'                         alpha = 0.95)
 #' }
 #' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
 robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
                         beta.wt = NULL, gamma.wt = NULL,
-                        control = list(), penalty.index = 3, alpha = 1) {
+                        control = list(), penalty.index = 3, alpha = 1,
+                        verbose = TRUE) {
   ## robust regression for mean centered data X and y
 
   p <- ncol(X)
@@ -403,7 +576,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
   ermat2 <- matrix(nrow = kfold, ncol = length(out$lampathcv))
   bind <- rep(T, p)
   for (kind in 1:kfold) { # kind =2
-    print(kind)
+    if (verbose) cat("Cross validation stage: ", kind, "\n")
     samInd <- sind != kind
     param.ini2 <- param.ini[c(bind, samInd)]
     nspcv[[kind]] <- robregcc_sp5(
@@ -541,6 +714,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #' @param gamma.wt initial value of shift parameter for weight construction/initialization
 #' @param control a list of internal parameters controlling the model fitting
 #' @param penalty.index 1, 2, 3 corresponding to adaptive, soft and hard penalty
+#' @param verbose TRUE/FALSE for showing progress of the cross validation
 #' @return
 #'   \item{Method}{Type of penalty used}
 #'   \item{betapath}{model parameter estimate along solution path}
@@ -550,17 +724,82 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #'   \item{y}{response}
 #' @export
 #' @importFrom utils modifyList
+#' @importFrom Rcpp evalCpp
 #' @importFrom MASS ginv
 #' @useDynLib robregcc
 #' @examples
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' rm(list=ls())
+#' 
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' data(simulate_robregcc_nsp)
+#' X <- simulate_robregcc_nsp$X;
+#' y <- simulate_robregcc_nsp$y
+#' C <- simulate_robregcc_nsp$C
+#' n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+#' 
+#' # Predictor transformation due to compositional constraint:
+#' # Equivalent to performing centered log-ratio transform 
+#' Xt <- svd(t(C))$u %>% tcrossprod() %>% subtract(diag(p),.) %>% crossprod(t(X),.)
+#' #
+#' Xm <- colMeans(Xt)
+#' Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+#' mean.y <- mean(y)
+#' y <- y - mean.y                           # centering of response 
+#' Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+#' C <- cbind(0,C)                           # accounting for intercept in constraint
+#' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+#' 
+#' example_seed <- 2*p+1               
+#' set.seed(example_seed) 
+#' 
+#' # Breakdown point for tukey Bisquare loss function 
+#' b1 = 0.5                    # 50% breakdown point
+#' cc1 =  1.567                # corresponding model parameter
+#' # b1 = 0.25; cc1 =  2.937   
+#' 
+#' # Initialization [PSC analysis for compositional data]
+#' control <- robregcc_option(maxiter=3000,tol = 1e-6)
+#' fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
+#' 
+#' 
+#' # Robust procedure
+#' # control parameters
+#' control <- robregcc_option()
+#' control$tol <- 1e-30
+#' control$nlam = 25; 
+#' control$lminfac = 1e-5;
+#' control$outMiter = 10000
+#' control$gamma <- 2
+#' # Robust regression using adaptive elastic net penalty [case III, Table 1]
+#' fit.ada <- robregcc_nsp(Xt,y, C, intercept = F,  
+#'                         gamma.wt = fit.init$residuals,
+#'                         control = control, penalty.index = 1)
+#' 
+#' 
+#' # Robust regression using elastic net penalty [case II, Table 1]
+#' control$lminfac = 1e-1;
+#' fit.soft <- robregcc_nsp(Xt,y,C,intercept = FALSE, gamma.wt = NULL,
+#'                          control = control, penalty.index = 2)
+#' 
+#' 
+#' 
+#' # Robust regression using hard-ridge penalty [case I, Table 1]
+#' control$tol <- 1e-30
+#' control$nlam = 25; 
+#' control$lminfac = 1e-1; 
+#' control$outMiter = 10000
+#' fit.hard <- robregcc_nsp(Xt,y,C, intercept = FALSE, 
+#'                          gamma.wt = fit.init$residuals,
+#'                          control = control, penalty.index = 3) 
+#' 
 #' }
 #' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
-                         control = list(), penalty.index = 1) {
+                         control = list(), penalty.index = 1, verbose = TRUE) {
   ## robust regression for mean centered data X and y
 
   n <- nrow(X)
@@ -637,7 +876,7 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
   nspcv <- vector("list", kfold)
   ermat2 <- matrix(nrow = kfold, ncol = length(lampath))
   for (kind in 1:kfold) { # kind =2
-    print(kind)
+    if (verbose) cat("Cross validation stage: ", kind, "\n")
     samInd <- sind != kind
     nspcv[[kind]] <- robregcc_nsp5(
       X[samInd, ], y[samInd], C, int0, gamma.wt[samInd], lampath,
@@ -767,14 +1006,47 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
 #' @export
 #' @import magrittr
 #' @importFrom MASS ginv
+#' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples  
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' rm(list=ls())
+#' 
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' data(simulate_robregcc_nsp)
+#' X <- simulate_robregcc_nsp$X;
+#' y <- simulate_robregcc_nsp$y
+#' C <- simulate_robregcc_nsp$C
+#' n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+#' 
+#' # Predictor transformation due to compositional constraint:
+#' # Equivalent to performing centered log-ratio transform 
+#' Xt <- svd(t(C))$u %>% tcrossprod() %>% subtract(diag(p),.) %>% crossprod(t(X),.)
+#' #
+#' Xm <- colMeans(Xt)
+#' Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+#' mean.y <- mean(y)
+#' y <- y - mean.y                           # centering of response 
+#' Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+#' C <- cbind(0,C)                           # accounting for intercept in constraint
+#' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+#' 
+#' example_seed <- 2*p+1               
+#' set.seed(example_seed) 
+#' 
+#' # Breakdown point for tukey Bisquare loss function 
+#' b1 = 0.5                    # 50% breakdown point
+#' cc1 =  1.567                # corresponding model parameter
+#' # b1 = 0.25; cc1 =  2.937   
+#' 
+#' # Initialization [PSC analysis for compositional data]
+#' control <- robregcc_option(maxiter=3000,tol = 1e-6)
+#' fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
 #' }
 #' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
                      C = NULL, control = list()) {
   # if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
@@ -802,7 +1074,7 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
   i <- 0
   err <- 1e6
   sc0 <- fo$scale
-  print(sc0)
+  # print(sc0)
   while (i < 200 && sum(ind) > (n1 / 2) && err > 1e-3) {
     # print(i);print(dim(X1[ind,]))
     dm1 <- dim(X1[ind, ])
@@ -862,14 +1134,47 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 #' @export
 #' @import magrittr
 #' @importFrom MASS ginv
+#' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples  
 #' \dontrun{
-#' ### specify examples here to be shown in the package:
-#' print("Examples")
+#' rm(list=ls())
+#' 
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' data(simulate_robregcc_sp)
+#' X <- simulate_robregcc_sp$X;
+#' y <- simulate_robregcc_sp$y
+#' C <- simulate_robregcc_sp$C
+#' n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+#' 
+#' # Predictor transformation due to compositional constraint:
+#' # Equivalent to performing centered log-ratio transform 
+#' Xt <- svd(t(C))$u %>% tcrossprod() %>% subtract(diag(p),.) %>% crossprod(t(X),.)
+#' #
+#' Xm <- colMeans(Xt)
+#' Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+#' mean.y <- mean(y)
+#' y <- y - mean.y                           # centering of response 
+#' Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+#' C <- cbind(0,C)                           # accounting for intercept in constraint
+#' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+#' 
+#' example_seed <- 2*p+1               
+#' set.seed(example_seed) 
+#' 
+#' # Breakdown point for tukey Bisquare loss function 
+#' b1 = 0.5                    # 50% breakdown point
+#' cc1 =  1.567                # corresponding model parameter
+#' # b1 = 0.25; cc1 =  2.937   
+#' 
+#' # Initialization [PSC analysis for compositional data]
+#' control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
+#' fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)  
 #' }
 #' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 cpsc_sp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25,
                         cc1 = 2.937, C = NULL,
                         we, type, control = list()) {

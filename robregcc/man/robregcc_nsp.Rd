@@ -5,7 +5,7 @@
 \title{Robust model estimation approach for regression with compositional covariates.}
 \usage{
 robregcc_nsp(X, y, C, intercept = FALSE, gamma.wt = NULL,
-  control = list(), penalty.index = 1)
+  control = list(), penalty.index = 1, verbose = TRUE)
 }
 \arguments{
 \item{X}{CLR transformed predictor matrix.}
@@ -21,6 +21,8 @@ robregcc_nsp(X, y, C, intercept = FALSE, gamma.wt = NULL,
 \item{control}{a list of internal parameters controlling the model fitting}
 
 \item{penalty.index}{1, 2, 3 corresponding to adaptive, soft and hard penalty}
+
+\item{verbose}{TRUE/FALSE for showing progress of the cross validation}
 }
 \value{
 \item{Method}{Type of penalty used}
@@ -35,10 +37,74 @@ Generate solution path for range of lambda in case of where model parameter beta
 }
 \examples{
 \dontrun{
-### specify examples here to be shown in the package:
-print("Examples")
+rm(list=ls())
+
+library(robregcc)
+library(magrittr)
+
+data(simulate_robregcc_nsp)
+X <- simulate_robregcc_nsp$X;
+y <- simulate_robregcc_nsp$y
+C <- simulate_robregcc_nsp$C
+n <- nrow(X); p <- ncol(X); k <-  nrow(C)
+
+# Predictor transformation due to compositional constraint:
+# Equivalent to performing centered log-ratio transform 
+Xt <- svd(t(C))$u \%>\% tcrossprod() \%>\% subtract(diag(p),.) \%>\% crossprod(t(X),.)
+#
+Xm <- colMeans(Xt)
+Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
+mean.y <- mean(y)
+y <- y - mean.y                           # centering of response 
+Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+C <- cbind(0,C)                           # accounting for intercept in constraint
+bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+
+example_seed <- 2*p+1               
+set.seed(example_seed) 
+
+# Breakdown point for tukey Bisquare loss function 
+b1 = 0.5                    # 50\% breakdown point
+cc1 =  1.567                # corresponding model parameter
+# b1 = 0.25; cc1 =  2.937   
+
+# Initialization [PSC analysis for compositional data]
+control <- robregcc_option(maxiter=3000,tol = 1e-6)
+fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
+
+
+# Robust procedure
+# control parameters
+control <- robregcc_option()
+control$tol <- 1e-30
+control$nlam = 25; 
+control$lminfac = 1e-5;
+control$outMiter = 10000
+control$gamma <- 2
+# Robust regression using adaptive elastic net penalty [case III, Table 1]
+fit.ada <- robregcc_nsp(Xt,y, C, intercept = F,  
+                        gamma.wt = fit.init$residuals,
+                        control = control, penalty.index = 1)
+
+
+# Robust regression using elastic net penalty [case II, Table 1]
+control$lminfac = 1e-1;
+fit.soft <- robregcc_nsp(Xt,y,C,intercept = FALSE, gamma.wt = NULL,
+                         control = control, penalty.index = 2)
+
+
+
+# Robust regression using hard-ridge penalty [case I, Table 1]
+control$tol <- 1e-30
+control$nlam = 25; 
+control$lminfac = 1e-1; 
+control$outMiter = 10000
+fit.hard <- robregcc_nsp(Xt,y,C, intercept = FALSE, 
+                         gamma.wt = fit.init$residuals,
+                         control = control, penalty.index = 3) 
+
 }
 }
 \references{
-Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
+Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 }
