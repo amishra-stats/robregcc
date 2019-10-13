@@ -26,7 +26,6 @@ classo(Xt, y, C, we = NULL, type = 1, control = list())
 The model uses scaled lasoo approach for model selection.
 }
 \examples{
-rm(list=ls())
 
 library(robregcc)
 library(magrittr)

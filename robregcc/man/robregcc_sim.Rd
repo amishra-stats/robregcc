@@ -37,7 +37,6 @@ Simulate data for the robust regression with compositional covariates
  
 ## Simulation example:
 
-rm(list=ls())
 library(robregcc)
 library(magrittr)
 
@@ -104,17 +103,13 @@ data.case <- vector("list",1)
 data.case <- robregcc_sim(n,beta,O = O,Sigma,levg = L, snr,shft = shFac,0,
                           C,out=data.case)
 
+# We have saved a copy of simulated data in the package 
+# with name simulate_robregcc_sp and simulate_robregcc_nsp
+
 X <- data.case$X                          # predictor matrix
 y <- data.case$y                          # model response 
 
-# if(sp_beta == 1){ 
-#   simulate_robregcc_sp <- list(X=X,y=y,C = C)
-#   save(simulate_robregcc_sp, file = "data/simulate_robregcc_sp.RData")
-# }
-# if(sp_beta == 0){ 
-#   simulate_robregcc_nsp <- list(X=X,y=y,C = C)
-#   save(simulate_robregcc_nsp, file = "data/simulate_robregcc_nsp.RData")
-# }
+
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.

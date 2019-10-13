@@ -16,3 +16,4 @@ Imports: Rcpp (>= 0.12.0), MASS, magrittr, graphics
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
 RoxygenNote: 6.1.1
+Encoding: UTF-8

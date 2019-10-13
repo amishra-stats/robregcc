@@ -42,8 +42,6 @@ robregcc_sp(X, y, C, beta.init = NULL, gamma.init = NULL,
 Fit regression model with compositional covariates for a  range of tuning parameter lambda. Model parameters is assumed to be sparse.
 }
 \examples{
-\dontrun{
-rm(list=ls())
 
 library(robregcc)
 library(magrittr)
@@ -118,7 +116,9 @@ fit.hard <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaf,
                         beta.wt=bw, gamma.wt = NULL,
                         control = control, penalty.index = 3, 
                         alpha = 0.95)
-}
+                        
+                        
+                        
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.

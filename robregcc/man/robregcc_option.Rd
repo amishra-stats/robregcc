@@ -64,7 +64,6 @@ The model approach use scaled lasoo approach for model selection.
 }
 \examples{
  
-rm(list=ls())
 library(robregcc)
 # default options
 control_default = robregcc_option()

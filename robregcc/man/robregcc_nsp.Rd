@@ -36,8 +36,6 @@ robregcc_nsp(X, y, C, intercept = FALSE, gamma.wt = NULL,
 Generate solution path for range of lambda in case of where model parameter beta is not assumed to be sparse(nsp).
 }
 \examples{
-\dontrun{
-rm(list=ls())
 
 library(robregcc)
 library(magrittr)
@@ -82,7 +80,7 @@ control$lminfac = 1e-5;
 control$outMiter = 10000
 control$gamma <- 2
 # Robust regression using adaptive elastic net penalty [case III, Table 1]
-fit.ada <- robregcc_nsp(Xt,y, C, intercept = F,  
+fit.ada <- robregcc_nsp(Xt,y, C, intercept = FALSE,  
                         gamma.wt = fit.init$residuals,
                         control = control, penalty.index = 1)
 
@@ -103,7 +101,6 @@ fit.hard <- robregcc_nsp(Xt,y,C, intercept = FALSE,
                          gamma.wt = fit.init$residuals,
                          control = control, penalty.index = 3) 
 
-}
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.

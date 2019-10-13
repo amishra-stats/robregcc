@@ -33,8 +33,6 @@ Produce model and its residual estimate based in PCS analysis.
 }
 \examples{
  
-\dontrun{
-rm(list=ls())
 
 library(robregcc)
 library(magrittr)
@@ -68,7 +66,8 @@ cc1 =  1.567                # corresponding model parameter
 # Initialization [PSC analysis for compositional data]
 control <- robregcc_option(maxiter=3000,tol = 1e-6)
 fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
-}
+
+
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.

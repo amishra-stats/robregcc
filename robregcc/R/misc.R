@@ -1,25 +1,64 @@
+## Truncated loss function for calculatin standard deviations
+truncLoss1 <- function(r) {
+  r. <- r - stats::median(r)
+  sigmae <- 1.483 * stats::median(abs(r.))  ## MAD : stats::median absolute deviation
+  sigmae <- (1.345 * sigmae)^2
+  r2 <- r.^2
+  gind <- r2 < sigmae
+  sd(r[gind])
+}
 
-#' Subfunction for principal sensitive component analysis:
-#'
-#' Subfubction PCS non-sparse.
-#'
-#' @param Xa CLR transformed predictor matrix.
-#' @param ya model response vector
-#' @param alp0 (0,0.5) fraction of data sample to be removed to generate subsample
-#' @param b1 tukey bisquare function parameter producing desired breakdown point
-#' @param cc1 tukey bisquare function parameter producing desired breakdown point
-#' @return
-#'   \item{beta}{Model parameter estimate}
-#'   \item{scale}{scale estimate}
+
+
+
+## rho function for the calculation of the error function
+rho <- function(u, cc = 1.56) {
+  w <- abs(u) <= cc
+  v <- (u^2 / (2) * (1 - (u^2 / (cc^2)) + (u^4 / (3 * cc^4)))) * w +
+    (1 - w) * (cc^2 / 6)
+  v <- v * 6 / cc^2
+  return(v)
+}
+
+
+
+
+## Calculate M-scale estimate 
+scale1 <- function(u, b, cc, initial.sc = stats::median(abs(u)) / .6745) {
+  max.it <- 200
+  sc <- initial.sc
+  i <- 0
+  eps <- 1e-8
+  # magic number alert
+  err <- 1
+  while (((i <- i + 1) < max.it) && (err > eps)) {
+    sc2 <- sqrt(sc^2 * mean(rho(u / sc, cc)) / b)
+    err <- abs(sc2 / sc - 1)
+    sc <- sc2
+  }
+  return(sc)
+}
+
+
+
+
+# Subfunction for principal sensitive component analysis:
+# 
+# Subfubction PCS non-sparse.
+# 
+# @param Xa CLR transformed predictor matrix.
+# @param ya model response vector
+# @param alp0 (0,0.5) fraction of data sample to be removed to generate subsample
+# @param b1 tukey bisquare function parameter producing desired breakdown point
+# @param cc1 tukey bisquare function parameter producing desired breakdown point
+# @return
+#   \item{beta}{Model parameter estimate}
+#   \item{scale}{scale estimate}
+# @references
+# Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
 #' @importFrom MASS ginv
-#' @importFrom stats median
 #' @import magrittr
 #' @useDynLib robregcc
-#' @examples
-#' ### specify examples here to be shown in the package:
-#' print("aditya")
-#' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
 getscsfun <- function(Xa, ya, alp0 = 0.4, b1 = 0.25, cc1 = 2.937) {
   # if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
   # ginv2 = function(x){
@@ -65,7 +104,7 @@ getscsfun <- function(Xa, ya, alp0 = 0.4, b1 = 0.25, cc1 = 2.937) {
     res <- ya - Xa %*% x
     scale1(res,
            b = b1, cc = cc1,
-           initial.sc = median(abs(res)) / .6745
+           initial.sc = stats::median(abs(res)) / .6745
     )
     # mscale(res)
   })
@@ -74,7 +113,7 @@ getscsfun <- function(Xa, ya, alp0 = 0.4, b1 = 0.25, cc1 = 2.937) {
   # scale0 <- mscale(res)
   scale0 <- scale1(res,
                    b = b1, cc = cc1, initial.sc =
-                     median(abs(res)) / .6745
+                     stats::median(abs(res)) / .6745
   )
   ab <- which(scmat == min(scmat, scale0), arr.ind = T)
   if (dim(ab)[1] == 0) {
@@ -92,31 +131,27 @@ getscsfun <- function(Xa, ya, alp0 = 0.4, b1 = 0.25, cc1 = 2.937) {
 
 
 
-#' Subfunction for principal sensitive component analysis (sparsity):
+# Subfunction for principal sensitive component analysis (sparsity):
 #'
-#' Subfubction PCS sparse.
-#'
-#' @param Xa CLR transformed predictor matrix.
-#' @param ya model response vector
-#' @param alp0 (0,0.5) fraction of data sample to be removed to generate subsample
-#' @param b1 tukey bisquare function parameter producing desired breakdown point
-#' @param cc1 tukey bisquare function parameter producing desired breakdown point
-#' @param C sub-compositional matrix
-#' @param we penalization index for model parameters beta
-#' @param type 1/2 for l1 / l2 loss in the model
-#' @param control a list of internal parameters controlling the model fitting
-#' @return
-#'   \item{beta}{Model parameter estimate}
-#'   \item{scale}{scale estimate}
+# Subfubction PCS sparse.
+# 
+# @param Xa CLR transformed predictor matrix.
+# @param ya model response vector
+# @param alp0 (0,0.5) fraction of data sample to be removed to generate subsample
+# @param b1 tukey bisquare function parameter producing desired breakdown point
+# @param cc1 tukey bisquare function parameter producing desired breakdown point
+# @param C sub-compositional matrix
+# @param we penalization index for model parameters beta
+# @param type 1/2 for l1 / l2 loss in the model
+# @param control a list of internal parameters controlling the model fitting
+# @return
+#   \item{beta}{Model parameter estimate}
+#   \item{scale}{scale estimate}
+# @references
+# Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
 #' @importFrom MASS ginv
-#' @importFrom stats median
 #' @import magrittr
 #' @useDynLib robregcc
-#' @examples
-#' ### specify examples here to be shown in the package:
-#' print("aditya")
-#' @references
-#' Mishra, A., Mueller, C.,(2018) \emph{Robust regression with compositional covariates. In prepration}.
 getscsfun.sp <- function(Xa, ya, alp0 = 0.4, b1 = 0.25,
                          cc1 = 2.937, C = NULL,
                          we, type, control = list()) {
@@ -170,7 +205,7 @@ getscsfun.sp <- function(Xa, ya, alp0 = 0.4, b1 = 0.25,
     res <- ya - Xa %*% x
     scale1(res,
            b = b1, cc = cc1, initial.sc =
-             median(abs(res)) / .6745
+             stats::median(abs(res)) / .6745
     )
     # mscale(res)
   })
@@ -180,7 +215,7 @@ getscsfun.sp <- function(Xa, ya, alp0 = 0.4, b1 = 0.25,
   # scale0 <- mscale(res)
   scale0 <- scale1(e,
                    b = b1, cc = cc1,
-                   initial.sc = median(abs(e)) / .6745
+                   initial.sc = stats::median(abs(e)) / .6745
   )
   ab <- which(scmat == min(scmat, scale0), arr.ind = T)
   if (dim(ab)[1] == 0) {
@@ -226,47 +261,6 @@ fnk <- function(kkkt, p) { ## Gradient of 'fr'
 
 
 
-
-## Truncated loss function for calculatin standard deviations
-truncLoss1 <- function(r) {
-  r. <- r - median(r)
-  sigmae <- 1.483 * median(abs(r.))  ## MAD : median absolute deviation
-  sigmae <- (1.345 * sigmae)^2
-  r2 <- r.^2
-  gind <- r2 < sigmae
-  sd(r[gind])
-}
-
-
-
-
-## rho function for the calculation of the error function
-rho <- function(u, cc = 1.56) {
-  w <- abs(u) <= cc
-  v <- (u^2 / (2) * (1 - (u^2 / (cc^2)) + (u^4 / (3 * cc^4)))) * w +
-    (1 - w) * (cc^2 / 6)
-  v <- v * 6 / cc^2
-  return(v)
-}
-
-
-
-
-## Calculate M-scale estimate 
-scale1 <- function(u, b, cc, initial.sc = median(abs(u)) / .6745) {
-  max.it <- 200
-  sc <- initial.sc
-  i <- 0
-  eps <- 1e-8
-  # magic number alert
-  err <- 1
-  while (((i <- i + 1) < max.it) && (err > eps)) {
-    sc2 <- sqrt(sc^2 * mean(rho(u / sc, cc)) / b)
-    err <- abs(sc2 / sc - 1)
-    sc <- sc2
-  }
-  return(sc)
-}
 
 
 

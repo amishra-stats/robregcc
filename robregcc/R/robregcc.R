@@ -1,4 +1,4 @@
-if (getRversion() >= "3.6.0") utils::globalVariables(c("."))
+if (getRversion() >= "3.5.0") utils::globalVariables(c("."))
 
 
 #' Simulation data
@@ -24,7 +24,6 @@ if (getRversion() >= "3.6.0") utils::globalVariables(c("."))
 #' @examples  
 #' ## Simulation example:
 #' 
-#' rm(list=ls())
 #' library(robregcc)
 #' library(magrittr)
 #' 
@@ -91,17 +90,13 @@ if (getRversion() >= "3.6.0") utils::globalVariables(c("."))
 #' data.case <- robregcc_sim(n,beta,O = O,Sigma,levg = L, snr,shft = shFac,0,
 #'                           C,out=data.case)
 #' 
+#' # We have saved a copy of simulated data in the package 
+#' # with name simulate_robregcc_sp and simulate_robregcc_nsp
+#' 
 #' X <- data.case$X                          # predictor matrix
 #' y <- data.case$y                          # model response 
 #' 
-#' # if(sp_beta == 1){ 
-#' #   simulate_robregcc_sp <- list(X=X,y=y,C = C)
-#' #   save(simulate_robregcc_sp, file = "data/simulate_robregcc_sp.RData")
-#' # }
-#' # if(sp_beta == 0){ 
-#' #   simulate_robregcc_nsp <- list(X=X,y=y,C = C)
-#' #   save(simulate_robregcc_nsp, file = "data/simulate_robregcc_nsp.RData")
-#' # }
+#' 
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
 robregcc_sim <- function(n, betacc, O, Sigma, levg, snr,
@@ -185,7 +180,6 @@ robregcc_sim <- function(n, betacc, O, Sigma, levg, snr,
 #' @return a list of controling parameter.
 #' @export
 #' @examples  
-#' rm(list=ls())
 #' library(robregcc)
 #' # default options
 #' control_default = robregcc_option()
@@ -232,7 +226,6 @@ robregcc_option <- function(maxiter = 10000, tol = 1e-10, nlam = 100,
 #' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples
-#' rm(list=ls())
 #' 
 #' library(robregcc)
 #' library(magrittr)
@@ -322,8 +315,6 @@ classo <- function(Xt, y, C, we = NULL,
 #' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples
-#' \dontrun{
-#' rm(list=ls())
 #' 
 #' library(robregcc)
 #' library(magrittr)
@@ -398,7 +389,9 @@ classo <- function(Xt, y, C, we = NULL,
 #'                         beta.wt=bw, gamma.wt = NULL,
 #'                         control = control, penalty.index = 3, 
 #'                         alpha = 0.95)
-#' }
+#'                         
+#'                         
+#'                         
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
 robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
@@ -728,8 +721,6 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #' @importFrom MASS ginv
 #' @useDynLib robregcc
 #' @examples
-#' \dontrun{
-#' rm(list=ls())
 #' 
 #' library(robregcc)
 #' library(magrittr)
@@ -774,7 +765,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #' control$outMiter = 10000
 #' control$gamma <- 2
 #' # Robust regression using adaptive elastic net penalty [case III, Table 1]
-#' fit.ada <- robregcc_nsp(Xt,y, C, intercept = F,  
+#' fit.ada <- robregcc_nsp(Xt,y, C, intercept = FALSE,  
 #'                         gamma.wt = fit.init$residuals,
 #'                         control = control, penalty.index = 1)
 #' 
@@ -795,7 +786,6 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #'                          gamma.wt = fit.init$residuals,
 #'                          control = control, penalty.index = 3) 
 #' 
-#' }
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
@@ -1009,8 +999,6 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
 #' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples  
-#' \dontrun{
-#' rm(list=ls())
 #' 
 #' library(robregcc)
 #' library(magrittr)
@@ -1044,7 +1032,8 @@ robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter=3000,tol = 1e-6)
 #' fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
-#' }
+#' 
+#' 
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
@@ -1137,8 +1126,6 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 #' @importFrom Rcpp evalCpp
 #' @useDynLib robregcc
 #' @examples  
-#' \dontrun{
-#' rm(list=ls())
 #' 
 #' library(robregcc)
 #' library(magrittr)
@@ -1172,7 +1159,7 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 #' fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)  
-#' }
+#' 
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 cpsc_sp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25,
