@@ -345,6 +345,7 @@ classo <- function(Xt, y, C, we = NULL,
 #' cc1 =  1.567                # corresponding model parameter
 #' # b1 = 0.25; cc1 =  2.937   
 #' 
+#' \donttest{
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 #' fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control) 
@@ -391,7 +392,7 @@ classo <- function(Xt, y, C, we = NULL,
 #'                         alpha = 0.95)
 #'                         
 #'                         
-#'                         
+#'  }                       
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
 robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
@@ -751,6 +752,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #' cc1 =  1.567                # corresponding model parameter
 #' # b1 = 0.25; cc1 =  2.937   
 #' 
+#' \donttest{
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter=3000,tol = 1e-6)
 #' fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
@@ -786,6 +788,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
 #'                          gamma.wt = fit.init$residuals,
 #'                          control = control, penalty.index = 3) 
 #' 
+#' }
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 robregcc_nsp <- function(X, y, C, intercept = FALSE, gamma.wt = NULL,
@@ -1156,10 +1159,14 @@ cpsc_nsp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
 #' cc1 =  1.567                # corresponding model parameter
 #' # b1 = 0.25; cc1 =  2.937   
 #' 
+#' \donttest{
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 #' fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)  
 #' 
+#' 
+#' 
+#' }
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
 cpsc_sp <- function(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25,

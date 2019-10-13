@@ -66,6 +66,7 @@ b1 = 0.5                    # 50\% breakdown point
 cc1 =  1.567                # corresponding model parameter
 # b1 = 0.25; cc1 =  2.937   
 
+\donttest{
 # Initialization [PSC analysis for compositional data]
 control <- robregcc_option(maxiter=3000,tol = 1e-6)
 fit.init  <- cpsc_nsp(Xt, y,alp=0.4,cfac=2,b1 = b1, cc1 = cc1,C,control)
@@ -101,6 +102,7 @@ fit.hard <- robregcc_nsp(Xt,y,C, intercept = FALSE,
                          gamma.wt = fit.init$residuals,
                          control = control, penalty.index = 3) 
 
+}
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.

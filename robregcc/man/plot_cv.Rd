@@ -2,12 +2,9 @@
 % Please edit documentation in R/plots_robregcc.R
 \name{plot_cv}
 \alias{plot_cv}
-\alias{plot_cv.robregcc}
 \title{Plot cross-validation error plot}
 \usage{
 plot_cv(object)
-
-plot_cv.robregcc(object)
 }
 \arguments{
 \item{object}{robregcc fitted onject}
@@ -50,6 +47,8 @@ b1 = 0.5                    # 50\% breakdown point
 cc1 =  1.567                # corresponding model parameter
 # b1 = 0.25; cc1 =  2.937   
 
+
+\donttest{
 # Initialization [PSC analysis for compositional data]
 control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
 fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control) 
@@ -101,5 +100,5 @@ plot_cv(fit.ada)
 plot_cv(fit.soft)
 plot_cv(fit.hard)
 
-
+}
 }
