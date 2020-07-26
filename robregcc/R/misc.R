@@ -261,10 +261,48 @@ fnk <- function(kkkt, p) { ## Gradient of 'fr'
 
 
 
+getLevIndex = function(X){
+  n <- nrow(X); p <- ncol(X)
+  xmean <- colMeans(X)
+  X <- t(t(X) - xmean) 
+  sfac <- apply(X, 2, sd)
+  sfac[sfac == 0] <- 1
+  sfac <- drop(1 / sfac)
+  ## scaling of X;
+  Xx <- X  * rep(sfac, each = n)
+  a <- abs(apply(Xx^2,1,sum)/p - 1)
+  thres = sqrt(8*(log(n) - log(0.99/2))/p)
+  which(a < thres)
+}
+
+
+
+
+updatebeta = function(ymean, beta0, sfac, xmean){
+  tem <- beta0[-1,]*sfac[-1]
+  rbind(as.vector(ymean + beta0[1,] - crossprod(tem, xmean[-1])), tem)
+}
 
 
 
 
 
-
-
+shift4resid = function(r){
+  r. <- r - stats::median(r)
+  sigmae <- 1.483 * stats::median(abs(r.))  ## MAD : stats::median
+  sigmae <- (2 * sigmae)^2
+  r2 <- r.^2
+  gind <- r2 < sigmae
+  limt <- sd(r[gind])
+  tind <- abs(r.) > 2*limt
+  a  <- r.[tind] 
+  a[a > 0] <- a[a > 0] - 2*limt
+  a[a < 0] <- a[a < 0] + 2*limt
+  b <- 0*r
+  b[tind] <- a 
+  cc  <- r.[tind] 
+  cc[cc > 0] <- 2*limt
+  cc[cc < 0] <- -2*limt
+  r.[tind] <- cc
+  cbind(r. , b + stats::median(r))
+}

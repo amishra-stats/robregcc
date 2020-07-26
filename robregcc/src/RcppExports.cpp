@@ -99,6 +99,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// classopath
+Rcpp::List classopath(arma::mat Xt, arma::vec y, arma::mat C, arma::vec we, Rcpp::List control);
+RcppExport SEXP _robregcc_classopath(SEXP XtSEXP, SEXP ySEXP, SEXP CSEXP, SEXP weSEXP, SEXP controlSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type Xt(XtSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type C(CSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type we(weSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
+    rcpp_result_gen = Rcpp::wrap(classopath(Xt, y, C, we, control));
+    return rcpp_result_gen;
+END_RCPP
+}
 // robregcc_nsp5
 Rcpp::List robregcc_nsp5(arma::mat X, arma::vec y, arma::mat C, int intercept, arma::vec gammawt, arma::vec lampath, arma::vec shwt, Rcpp::List control, int ptype);
 RcppExport SEXP _robregcc_robregcc_nsp5(SEXP XSEXP, SEXP ySEXP, SEXP CSEXP, SEXP interceptSEXP, SEXP gammawtSEXP, SEXP lampathSEXP, SEXP shwtSEXP, SEXP controlSEXP, SEXP ptypeSEXP) {
@@ -163,6 +178,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_robregcc_thresC", (DL_FUNC) &_robregcc_thresC, 3},
     {"_robregcc_classoshe", (DL_FUNC) &_robregcc_classoshe, 6},
     {"_robregcc_classol2", (DL_FUNC) &_robregcc_classol2, 6},
+    {"_robregcc_classopath", (DL_FUNC) &_robregcc_classopath, 5},
     {"_robregcc_robregcc_nsp5", (DL_FUNC) &_robregcc_robregcc_nsp5, 9},
     {"_robregcc_robregcc_sp5", (DL_FUNC) &_robregcc_robregcc_sp5, 10},
     {"_robregcc_c_ridge2", (DL_FUNC) &_robregcc_c_ridge2, 6},

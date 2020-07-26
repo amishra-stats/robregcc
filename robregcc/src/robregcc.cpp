@@ -254,6 +254,69 @@ Rcpp::List classol2(arma::mat Xt, arma::vec y, arma::mat C, arma::vec we, double
 
 
 
+// //' Engine function
+// //'
+////' @export
+// [[Rcpp::export]]
+Rcpp::List classopath(arma::mat Xt, arma::vec y, arma::mat C, arma::vec we,
+                       Rcpp::List control){
+  // centered Xt and centered y provided 
+  int i,n = Xt.n_rows, p = Xt.n_cols, maxiter = control["maxiter"], kk = C.n_rows;
+  int nlam = control["nlam"],k,j;
+  
+  Rcpp::List out;
+  mat sfac = stddev(Xt);
+  double nu = control["nu"],mu,tol =control["tol"],tem,du,lminf =control["lminfac"];
+  double err,spp = control["sp"];
+  spp = p*spp;
+  for(i=0; i < p; i++){
+    if(sfac(0,i)!=0) sfac(0,i) = 1/sfac(0,i); else sfac(0,i) = 1;
+  }
+  Xt  = Xt.each_row()%sfac;
+  C  = C.each_row()%sfac;
+  mat xx = Xt.t()*Xt/n , cc = C.t()*C; ///
+  vec xy = Xt.t()*y/n; //
+  vec xxdiag = xx.diag(), ccdiag = cc.diag();
+  xx.diag().zeros();  cc.diag().zeros();
+  
+  tem = max(abs(xy));
+  arma::vec lampath =  exp(linspace<vec>(log(tem),  log(tem*lminf), nlam));
+  vec lam, betap = zeros<vec>(p) , betau = zeros<vec>(p), psi;
+  arma::mat betapath =  zeros<mat>(p,nlam);
+  for(i=0; i < nlam; i++){
+    lam = we*lampath(i);
+    if(i>0) betau = betapath.col(i-1);
+    mu =  control["mu"]; psi = zeros<vec>(kk);
+    for(k=0; k < maxiter; k++){
+      for(j=0; j < p; j++){
+        du = (xy(j) - sum(xx.row(j)*betau)); //// check 
+        du = du-mu*(sum(cc.row(j)*betau) + sum(C.col(j)%psi));
+        betau(j) = softThres(du,lam(j))/(xxdiag(j) + mu*ccdiag(j));
+      }
+      mu = mu*nu;
+      psi = psi+ C*betau;
+      err = sqrt(sum(square(betap-betau))); 
+      betap = betau;
+      if(err < tol && k >0) {break;}
+    }
+    // cout << err << ' ' << i << ' ' << k << std::endl;
+    betapath.col(i) = betap;
+    
+    if(nzcount(betap) > spp) {break;}
+  }
+  
+  betapath = betapath.cols(0,i); 
+  betapath  = betapath.each_col()%vectorise(sfac);
+  out["betapath"] = betapath;
+  out["lampath"] = lampath;
+  out["sfac"] = sfac;
+  return(out);
+}
+
+
+
+
+
 // //' Engine function 
 // //' 
 // @export
@@ -364,6 +427,146 @@ Rcpp::List robregcc_nsp5(arma::mat X, arma::vec y, arma::mat C, int intercept, a
 
 
 
+// // [[Rcpp::export]]
+// Rcpp::List robregcc_sp4(arma::mat X, arma::vec y, arma::mat C, 
+//                         arma::vec paramin, Rcpp::List control,
+//                         arma::vec shwt, arma::vec lampath,
+//                         int ptype, double k0, double alpha){
+//   // Mean centered data:
+//   int i,j,n = X.n_rows, p = X.n_cols, outMiter = control["outMiter"];
+//   int nlam = lampath.n_rows,pind =1, kk=0,jj=0 ,k=C.n_rows, np = n+p;
+//   double mu = control["mu"],nu = control["nu"],spb = control["spb"],spn= control["spy"];
+//   double k01 = 1-(1/k0); // n=1
+//   
+//   // Setting for the case of when n is handled inside
+//   // X = X/sqrt(n); y = y/sqrt(n); 
+//   
+//   if(ptype==3) pind = 0;
+//   lampath = lampath/k0;
+//   
+//   // thres pt;
+//   std::function<double(double , double )> thr;
+//   if(pind==1)
+//     thr = softThres;
+//   if(pind==0)
+//     thr = hardThres;
+//   
+//   //  check for uninitialized variable 
+//   // store some value 
+//   vec xy1 = X.t()*y, y1(n);
+//   xy1 = xy1/k0;y1 = sqrt(1)*y/k0; // n=1
+//   mat C2 = (mu/k0)*C, xx = (X.t()*X)/k0, cc = (mu/k0)*C.t()*C;
+//   mat xx11 = diagmat(ones<vec>(p))- (xx+ cc); 
+//   mat x1 = sqrt(1)*X/k0, x1t = x1.t();
+//   
+//   // output structure for storing  
+//   arma::mat betapath =  zeros<mat>(p,nlam);
+//   arma::mat gammapath =  zeros<mat>(n,nlam);
+//   vec gammau=zeros<vec>(n), betau = zeros<vec>(p),elfac,lamgamma(n),lambeta(p);
+//   vec psi1,psi,xy2,betap,gammap,tempx,tempy;
+//   spn = n*spn; spb = p*spb;
+//   
+//   //  variables defined for the loop 
+//   double errout,tol = control["tol"],spgamma,spbeta, outtol = control["out.tol"];
+//   double errin,erbet,ergm;
+//   int inMiter = control["inMiter"];
+//   uvec tm2(n),tm3(p);
+//   psi = zeros<vec>(k); psi1 = zeros<vec>(k);
+//   int fpath = control["fullpath"];
+//   // for loop of the body 
+//   for(i=0; i < nlam; i++){
+//     // lambeta = alpha*lampath(i)*shwt.subvec(0,p-1); //
+//     // elfac = 1/(1+(1-alpha)*shwt.subvec(0,p-1)*lampath(i));// 
+//     // lamgamma = shwt.subvec(p,np-1)*lampath(i); // 
+//     elfac = 1/(1+(1-alpha)*lampath(i));// 
+//     lambeta = alpha*shwt.subvec(0,p-1)*lampath(i)*elfac; //
+//     // elfac = 1/(1+(1-alpha)*lampath(i));// 
+//     lamgamma = alpha*shwt.subvec(p,np-1)*lampath(i)*elfac; // 
+//     if(i > 0) {
+//       betau = betapath.col(i-1);
+//       gammau = gammapath.col(i-1);
+//     }
+//     
+//     if(ptype==3) {
+//       betau = paramin.subvec(0,p-1);
+//       gammau = paramin.subvec(p,np-1);
+//     }
+//     
+//     
+//     errout = 1e6;kk = 0;
+//     mu = control["mu"]; psi = psi*0; psi1 = psi1*0;
+//     spgamma = 1;spbeta = 1;
+//     //  while loop 
+//     while ((errout > outtol) && (kk < outMiter)  && (spgamma < spn)  && (spbeta < spb) ){
+//     // while ((errout > outtol) && (kk < outMiter) && (0 < spgamma) && (spgamma < spn) && (0 < spbeta) && (spbeta < spb) ){
+//       errin = 1e6; j = 0;
+//       xy2 = xy1 - C2.t()*psi;
+//       
+//       betap = betau ; gammap = gammau; erbet = 10; ergm = 10;
+//       // inner core while loop 
+//       while ( (j < inMiter) && (erbet>0) && (ergm>0)){  //(errin > tol) &&
+//         tm2 = find(gammau!=0); 
+//         tm3 = find(betau!=0); 
+//         tempx = xy2 +  xx11.cols(tm3)*betau(tm3) - x1t.cols(tm2)*gammau(tm2); 
+//         tempy = y1 - x1.cols(tm3)*betau(tm3) + k01*gammau;
+//         
+//         tempy =tempy*elfac;
+//         for(jj=0; jj<n; jj++)
+//           gammau(jj) = thr(tempy(jj),lamgamma(jj));
+//         // gammau(jj) = pt.calculate(pind,tempy(jj),lamgamma(jj));
+//         
+//         
+//         tempx =tempx*elfac;
+//         for(jj=0; jj<p; jj++)
+//           betau(jj) = thr(tempx(jj),lambeta(jj));
+//         // betau(jj) = pt.calculate(pind,tempx(jj),lambeta(jj));
+//         
+//         
+//         erbet =max(abs(betap - betau));
+//         ergm = max(abs(gammap - gammau));
+//         // errin = erbet/accu(abs(betap)) + ergm/accu(abs(gammap));
+//         errin = erbet + ergm;
+//         gammap = gammau;
+//         betap = betau;
+//         j = j + 1;
+//         if((j>2) && ( errin < tol) ) { break;}
+//       }
+//       
+//       spgamma = nzcount(gammau); mu = mu*nu;
+//       tm3 = find(betau!=0); spbeta = tm3.n_elem;
+//       psi1 = C.cols(tm3)*betau(tm3);
+//       psi = psi + psi1;
+//       // errout = max(abs(psi - psi1));//accu(abs(psi1));
+//       errout = max(abs(psi1));
+//       // psi1 = psi;
+//       kk = kk+1;
+//     }
+//     // cout << j << " a " << kk << std::endl;
+//     // cout << j << " a " << kk<< " a " << errout << " a " << outtol<< " a " << spgamma<< " a " << spbeta << std::endl;
+//     
+//     gammapath.col(i)=gammau;
+//     betapath.col(i) = betau;
+//     if(((spgamma > spn) || (spbeta > spb)) && (fpath == 0)) {break;}
+//   }
+//   i=std::min(i,nlam-1);
+//   betapath = betapath.cols(0,i);
+//   gammapath = sqrt(1)*gammapath.cols(0,i); // n=1
+//   lampath = lampath.subvec(0,i);
+//   // betapath = betapath.each_col()%vectorise(sfac);
+//   // 
+//   return List::create(Named("betapath") = betapath,
+//                       Named("Method") = ptype,
+//                       Named("gammapath") = gammapath,
+//                       // Named("lampath") = lampath,
+//                       Named("nlambda") = i+1
+//   );
+// }
+// 
+
+
+
+
+
 // [[Rcpp::export]]
 Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C, 
                         arma::vec paramin, Rcpp::List control,
@@ -375,7 +578,12 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
   double mu = control["mu"],nu = control["nu"],spb = control["spb"],spn= control["spy"];
   double k01 = 1-(1/k0); // n=1
   
-  if(ptype==3) pind = 0;
+  X = X/sqrt(n); y = y/sqrt(n);
+  // if(ptype==1) shwt.subvec(p,np-1) = shwt.subvec(p,np-1)/sqrt(n);
+  if(ptype==3) {
+    pind = 0;
+    paramin.subvec(p,np-1) = paramin.subvec(p,np-1)/sqrt(n);
+  }
   lampath = lampath/k0;
   
   // thres pt;
@@ -431,7 +639,8 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
     mu = control["mu"]; psi = psi*0; psi1 = psi1*0;
     spgamma = 1;spbeta = 1;
     //  while loop 
-    while ((errout > outtol) && (kk < outMiter) && (0 < spgamma) && (spgamma < spn) && (0 < spbeta) && (spbeta < spb) ){
+    while ((errout > outtol) && (kk < outMiter)  && (spgamma < spn)  && (spbeta < spb) ){
+    // while ((errout > outtol) && (kk < outMiter) && (0 < spgamma) && (spgamma < spn) && (0 < spbeta) && (spbeta < spb) ){
       errin = 1e6; j = 0;
       xy2 = xy1 - C2.t()*psi;
       
@@ -475,6 +684,7 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
       kk = kk+1;
     }
     // cout << j << " a " << kk << std::endl;
+    // cout << j << " a " << kk<< " a " << errout << " a " << outtol<< " a " << spgamma<< " a " << spbeta << std::endl;
     
     gammapath.col(i)=gammau;
     betapath.col(i) = betau;
@@ -482,7 +692,7 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
   }
   i=std::min(i,nlam-1);
   betapath = betapath.cols(0,i);
-  gammapath = sqrt(1)*gammapath.cols(0,i); // n=1
+  gammapath = sqrt(n)*gammapath.cols(0,i); // n=1
   lampath = lampath.subvec(0,i);
   // betapath = betapath.each_col()%vectorise(sfac);
   // 
@@ -493,8 +703,6 @@ Rcpp::List robregcc_sp5(arma::mat X, arma::vec y, arma::mat C,
                       Named("nlambda") = i+1
   );
 }
-
-
 
 
 
@@ -574,11 +782,12 @@ Rcpp::List c_ridge2(arma::mat Xt, arma::vec y, arma::mat C, int nfold,
   xx = U4*diagmat(lam)*U4.t();
   psi = zeros<vec>(kk);
   // convergence of the inner loop
-  for(k=0; k < maxiter; k++){
+  // for(k=0; k < maxiter; k++){
+  for(k=0; k < 10000; k++){
     betau = xx*(xytr - C2*psi);
     err = C*betau; //sqrt(sum(square(betap-betau))); 
     psi = psi+ err;
-    if(sum(abs(err)) < tol && k >0) break;
+    if(sum(abs(err)) < 1e-20 && k >0) break;
   }
   
   out["dev"] = dev;

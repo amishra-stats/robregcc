@@ -26,27 +26,19 @@ classo(Xt, y, C, we = NULL, type = 1, control = list())
 The model uses scaled lasoo approach for model selection.
 }
 \examples{
-
 library(robregcc)
 library(magrittr)
 
-data(simulate_robregcc_sp)
-X <- simulate_robregcc_sp$X;
-y <- simulate_robregcc_sp$y
-C <- simulate_robregcc_sp$C
+data(simulate_robregcc)
+X <- simulate_robregcc$X;
+y <- simulate_robregcc$y
+C <- simulate_robregcc$C
 n <- nrow(X); p <- ncol(X); k <-  nrow(C)
 
 # Predictor transformation due to compositional constraint:
-# Equivalent to performing centered log-ratio transform 
-Xt <- svd(t(C))$u \%>\% tcrossprod() \%>\% subtract(diag(p),.) \%>\% crossprod(t(X),.)
-#
-Xm <- colMeans(Xt)
-Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
-mean.y <- mean(y)
-y <- y - mean.y                           # centering of response 
-Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
-C <- cbind(0,C)                           # accounting for intercept in constraint
-bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+Xt <- cbind(1,X)          # accounting for intercept in predictor
+C <- cbind(0,C)            # accounting for intercept in constraint
+bw <- c(0,rep(1,p))        # weight matrix to not penalize intercept 
 
 # Non-robust regression, [Pixu Shi 2016]
 control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)

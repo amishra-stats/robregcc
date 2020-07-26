@@ -4,12 +4,14 @@
 \alias{robregcc_sim}
 \title{Simulation data}
 \usage{
-robregcc_sim(n, betacc, O, Sigma, levg, snr, shft, m, C, out = list())
+robregcc_sim(n, betacc, beta0, O, Sigma, levg, snr, shft, m, C, out = list())
 }
 \arguments{
 \item{n}{sample size}
 
 \item{betacc}{model parameter satisfying compositional covariates}
+
+\item{beta0}{intercept}
 
 \item{O}{number of outlier}
 
@@ -36,78 +38,52 @@ Simulate data for the robust regression with compositional covariates
 \examples{
  
 ## Simulation example:
-
 library(robregcc)
 library(magrittr)
 
 ## n: sample size 
 ## p: number of predictors
 ## o: fraction of observations as outliers
-## L: {0,1} => leveraged {no, yes}, indicator variable for outlier type
-## shFac: multiplicative factor of true standard deviation by which O, 
-##         i.e., outliers fraction of observations are shifted. 
+## L: {0,1} => leveraged {no, yes}, 
+## s: multiplicative factor 
 ## ngrp: number of subgroup in the model 
-## snr: noise to signal ratio for computing true standard deviation of error 
+## snr: noise to signal ratio for computing true std_err
 
-p <- 80                            
-n <- 300                           
-o <- 0.10                            
-L <- 1                              
-shFac <- 6       # shFac = {6,8} corresponds to {moderate, high} outlier 
-ngrp <- 4                         
-snr <- 3   
-sp_beta <- 1
-
-# Set seed for reproducibility 
-example_seed <- 2*p+1               
+## Define parameters to simulate example
+p <- 80                # number of predictors  
+n <- 300               # number of sample   
+O <- 0.10*n            # number of outlier
+L <- 1                             
+s <- 8                          
+ngrp <- 4              # number of sub-composition
+snr <- 3               # Signal to noise ratio
+example_seed <- 2*p+1  # example seed
 set.seed(example_seed) 
-
-## 1. coefficient and subcomposition matrix C
-if(sp_beta == 1){         ## sparse model coefficient matrix 
-  #' subcomposition matrix C
-  C1 <- matrix(0,ngrp,23)
-  tind <- c(0,10,16,20,23)
-  for(ii in 1:ngrp)
-    C1[ii,(tind[ii]+1):tind[ii+1]] <- 1
-  C <- matrix(0,ngrp,p)
-  C[,1:ncol(C1)] <- C1            
-  
-  
-  # model coefficient beta; Follow examples from [Pixu Shi 2016]
-  beta <- c(1, - 0.8, 0.4, 0, 0, - 0.6, 0, 0, 0, 0, -1.5, 
-            0, 1.2, 0, 0, 0.3)
-  beta <- c(beta,rep(0,p-length(beta)))
-  tcrossprod(C,t(beta)) ##' sanity check
-}  else if(sp_beta == 0) { ## non sparse model coefficient matrix 
-  # subcomposition matrix C
-  j <- 1; C <- matrix(0,ngrp,p)
-  for(ii in 1:ngrp){
-    tv <-  min(c(round(ii*p/ngrp),p))
-    C[ii,j:tv] <- 1
-    j <- tv+1
-  }
-  
-  # model coefficient beta;
-  beta <- sample(c(1,-1),p,replace = T)*runif(p,.3,.4)
-  beta <- svd(t(C))$u \%>\% tcrossprod() \%>\% 
-    subtract(diag(p),.) \%>\% 
-    tcrossprod(.,t(beta))
-  tcrossprod(C,t(beta)) ## sanity check
-}
-# number of outliers
-O <- o*n  
-
-## 2. simulate response and predictor matrix, i.e., X, y
+# Simulate subcomposition matrix
+C1 <- matrix(0,ngrp,23)
+tind <- c(0,10,16,20,23)
+for (ii in 1:ngrp)
+  C1[ii,(tind[ii] + 1):tind[ii + 1]] <- 1
+C <- matrix(0,ngrp,p)
+C[,1:ncol(C1)] <- C1            
+# model parameter beta
+beta0 <- 0.5
+beta <- c(1, -0.8, 0.4, 0, 0, -0.6, 0, 0, 0, 0, -1.5, 0, 1.2, 0, 0, 0.3)
+beta <- c(beta,rep(0,p - length(beta)))
+# Simulate response and predictor, i.e., X, y
 Sigma  <- 1:p \%>\% outer(.,.,'-') \%>\% abs(); Sigma  <- 0.5^Sigma
 data.case <- vector("list",1)
-data.case <- robregcc_sim(n,beta,O = O,Sigma,levg = L, snr,shft = shFac,0,
-                          C,out=data.case)
-
+set.seed(example_seed)
+data.case <- robregcc_sim(n,beta,beta0, O = O,
+      Sigma,levg = L, snr,shft = s,0, C,out = data.case)
+data.case$C <- C                         
 # We have saved a copy of simulated data in the package 
-# with name simulate_robregcc_sp and simulate_robregcc_nsp
+# with name simulate_robregcc 
+# simulate_robregcc = data.case;
+# save(simulate_robregcc, file ='data/simulate_robregcc.rda')
 
-X <- data.case$X                          # predictor matrix
-y <- data.case$y                          # model response 
+X <- data.case$X                 # predictor matrix
+y <- data.case$y                 # model response 
 
 
 }

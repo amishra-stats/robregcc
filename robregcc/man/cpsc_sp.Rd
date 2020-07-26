@@ -4,8 +4,18 @@
 \alias{cpsc_sp}
 \title{Principal sensitivity component analysis with compositional covariates in sparse setting.}
 \usage{
-cpsc_sp(X0, y0, alp = 0.4, cfac = 2, b1 = 0.25, cc1 = 2.937,
-  C = NULL, we, type, control = list())
+cpsc_sp(
+  X0,
+  y0,
+  alp = 0.4,
+  cfac = 2,
+  b1 = 0.25,
+  cc1 = 2.937,
+  C = NULL,
+  we,
+  type,
+  control = list()
+)
 }
 \arguments{
 \item{X0}{CLR transformed predictor matrix.}
@@ -41,23 +51,15 @@ Produce model and its residual estimate based on PCS analysis.
 library(robregcc)
 library(magrittr)
 
-data(simulate_robregcc_sp)
-X <- simulate_robregcc_sp$X;
-y <- simulate_robregcc_sp$y
-C <- simulate_robregcc_sp$C
+data(simulate_robregcc)
+X <- simulate_robregcc$X;
+y <- simulate_robregcc$y
+C <- simulate_robregcc$C
 n <- nrow(X); p <- ncol(X); k <-  nrow(C)
 
-# Predictor transformation due to compositional constraint:
-# Equivalent to performing centered log-ratio transform 
-Xt <- svd(t(C))$u \%>\% tcrossprod() \%>\% subtract(diag(p),.) \%>\% crossprod(t(X),.)
-#
-Xm <- colMeans(Xt)
-Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
-mean.y <- mean(y)
-y <- y - mean.y                           # centering of response 
-Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
-C <- cbind(0,C)                           # accounting for intercept in constraint
-bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
+Xt <- cbind(1,X)  # include intercept in predictor
+C <- cbind(0,C)    # include intercept in constraint
+bw <- c(0,rep(1,p)) # weights not penalize intercept 
 
 example_seed <- 2*p+1               
 set.seed(example_seed) 
@@ -65,16 +67,14 @@ set.seed(example_seed)
 # Breakdown point for tukey Bisquare loss function 
 b1 = 0.5                    # 50\% breakdown point
 cc1 =  1.567                # corresponding model parameter
-# b1 = 0.25; cc1 =  2.937   
+b1 = 0.25; cc1 =  2.937   
 
-\donttest{
 # Initialization [PSC analysis for compositional data]
-control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
-fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control)  
+control <- robregcc_option(maxiter = 1000,
+ tol = 1e-4,lminfac = 1e-7)
+fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1,
+cc1 = cc1,C,bw,1,control) 
 
-
-
-}
 }
 \references{
 Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.

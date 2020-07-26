@@ -19,85 +19,71 @@ S3 methods plotting solution path of model parameter and mean shift using the ob
 }
 \examples{
  
-
-library(robregcc)
 library(magrittr)
+library(robregcc)
 
-data(simulate_robregcc_sp)
-X <- simulate_robregcc_sp$X;
-y <- simulate_robregcc_sp$y
-C <- simulate_robregcc_sp$C
+data(simulate_robregcc)
+X <- simulate_robregcc$X;
+y <- simulate_robregcc$y
+C <- simulate_robregcc$C
 n <- nrow(X); p <- ncol(X); k <-  nrow(C)
 
-# Predictor transformation due to compositional constraint:
-# Equivalent to performing centered log-ratio transform 
-Xt <- svd(t(C))$u \%>\% tcrossprod() \%>\% subtract(diag(p),.) \%>\% crossprod(t(X),.)
-#
-Xm <- colMeans(Xt)
-Xt <- scale(Xt,Xm,FALSE)                  # centering of predictors 
-mean.y <- mean(y)
-y <- y - mean.y                           # centering of response 
-Xt <- cbind(1,Xt)                         # accounting for intercept in predictor
+Xt <- cbind(1,X)                         # accounting for intercept in predictor
 C <- cbind(0,C)                           # accounting for intercept in constraint
 bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
 
 example_seed <- 2*p+1               
 set.seed(example_seed) 
-
+\donttest{
 # Breakdown point for tukey Bisquare loss function 
 b1 = 0.5                    # 50\% breakdown point
 cc1 =  1.567                # corresponding model parameter
-# b1 = 0.25; cc1 =  2.937   
+b1 = 0.25; cc1 =  2.937   
 
-
-\donttest{
 # Initialization [PSC analysis for compositional data]
 control <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
-fit.init <- cpsc_sp(Xt, y,alp=0.4, cfac=2, b1=b1,cc1=cc1,C,bw,1,control) 
+fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1, 
+cc1 = cc1,C,bw,1,control)  
 
-# Robust procedure
+## Robust model fitting
+
 # control parameters
 control <- robregcc_option()
-beta.wt <- fit.init$betaR           # Set weight for model parameter beta
+beta.wt <- fit.init$betaR    # Set weight for model parameter beta
 beta.wt[1] <- 0
-control$gamma = 2                   # gamma for constructing  weighted penalty
-control$spb = 40/p                  # fraction of maximum non-zero model parameter beta
-control$outMiter = 1000             # Outer loop iteration
-control$inMiter = 3000              # Inner loop iteration
-control$nlam = 50                   # Number of tuning parameter lambda to be explored
-control$lmaxfac = 1                 # Parameter for constructing sequence of lambda
-control$lminfac = 1e-8              # Parameter for constructing sequence of lambda 
-control$tol = 1e-20;                # tolrence parameter for converging [inner  loop]
-control$out.tol = 1e-16             # tolerence parameter for convergence [outer loop]
-control$kfold = 5                   # number of fold of crossvalidation
-
-
-# Robust regression using adaptive elastic net penalty [case III, Table 1]
-fit.ada <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaR, 
-                       gamma.init = fit.init$residualR,
-                       beta.wt=abs(beta.wt), 
-                       gamma.wt = abs(fit.init$residualR),
+control$gamma = 1            # gamma for constructing  weighted penalty
+control$spb = 40/p           # fraction of maximum non-zero model parameter beta
+control$outMiter = 1000      # Outer loop iteration
+control$inMiter = 3000       # Inner loop iteration
+control$nlam = 50            # Number of tuning parameter lambda to be explored
+control$lmaxfac = 1          # Parameter for constructing sequence of lambda
+control$lminfac = 1e-8       # Parameter for constructing sequence of lambda 
+control$tol = 1e-20;         # tolrence parameter for converging [inner  loop]
+control$out.tol = 1e-16      # tolerence parameter for convergence [outer loop]
+control$kfold = 10           # number of fold of crossvalidation
+control$sigmafac = 2#1.345
+# Robust regression using adaptive lasso penalty
+fit.ada <- robregcc_sp(Xt,y,C,
+                       beta.init = beta.wt,  cindex = 1, 
+                       gamma.init = fit.init$residuals,
                        control = control, 
-                       penalty.index = 1, alpha = 0.95) 
-                       
-# Robust regression using lasso penalty [Huber equivalent]   [case II, Table 1]
-fit.soft <- robregcc_sp(Xt,y,C, beta.init=NULL, gamma.init = NULL,
-                        beta.wt=bw, gamma.wt = NULL,
+                       penalty.index = 1, alpha = 0.95)
+
+# Robust regression using lasso penalty [Huber equivalent]   
+fit.soft <- robregcc_sp(Xt,y,C, cindex = 1, 
                         control = control, penalty.index = 2, 
                         alpha = 0.95)
 
 
-# Robust regression using hard thresholding penalty [case I, Table 1]
-control$lmaxfac = 1e2        # Parameter for constructing sequence of lambda
-control$lminfac = 1e-3       # Parameter for constructing sequence of lambda
-fit.hard <- robregcc_sp(Xt,y,C, beta.init=fit.init$betaf, 
+# Robust regression using hard thresholding penalty
+control$lmaxfac = 1e2               # Parameter for constructing sequence of lambda
+control$lminfac = 1e-3              # Parameter for constructing sequence of lambda
+control$sigmafac = 2#1.345
+fit.hard <- robregcc_sp(Xt,y,C, beta.init = fit.init$betaf, 
                         gamma.init = fit.init$residuals,
-                        beta.wt=bw, gamma.wt = NULL,
+                        cindex = 1, 
                         control = control, penalty.index = 3, 
                         alpha = 0.95)
-                        
-                        
-
 plot_path(fit.ada)
 plot_path(fit.soft)
 plot_path(fit.hard)

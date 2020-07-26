@@ -40,6 +40,10 @@ classol2 <- function(Xt, y, C, we, lam0, control) {
     .Call('_robregcc_classol2', PACKAGE = 'robregcc', Xt, y, C, we, lam0, control)
 }
 
+classopath <- function(Xt, y, C, we, control) {
+    .Call('_robregcc_classopath', PACKAGE = 'robregcc', Xt, y, C, we, control)
+}
+
 robregcc_nsp5 <- function(X, y, C, intercept, gammawt, lampath, shwt, control, ptype) {
     .Call('_robregcc_robregcc_nsp5', PACKAGE = 'robregcc', X, y, C, intercept, gammawt, lampath, shwt, control, ptype)
 }

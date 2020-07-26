@@ -4,12 +4,31 @@
 \alias{robregcc_option}
 \title{Control  parameter for model estimation:}
 \usage{
-robregcc_option(maxiter = 10000, tol = 1e-10, nlam = 100,
-  out.tol = 1e-08, lminfac = 1e-08, lmaxfac = 10, mu = 1,
-  nu = 1.05, sp = 0.3, gamma = 2, outMiter = 3000, inMiter = 500,
-  kmaxS = 500, tolS = 1e-04, nlamx = 20, nlamy = 20, spb = 0.3,
-  spy = 0.3, lminfacX = 1e-06, lminfacY = 0.01, kfold = 5,
-  fullpath = 0)
+robregcc_option(
+  maxiter = 10000,
+  tol = 1e-10,
+  nlam = 100,
+  out.tol = 1e-08,
+  lminfac = 1e-08,
+  lmaxfac = 10,
+  mu = 1,
+  nu = 1.05,
+  sp = 0.3,
+  gamma = 2,
+  outMiter = 3000,
+  inMiter = 500,
+  kmaxS = 500,
+  tolS = 1e-04,
+  nlamx = 20,
+  nlamy = 20,
+  spb = 0.3,
+  spy = 0.3,
+  lminfacX = 1e-06,
+  lminfacY = 0.01,
+  kfold = 10,
+  fullpath = 0,
+  sigmafac = 2
+)
 }
 \arguments{
 \item{maxiter}{maximum number of iteration for convergence}
@@ -55,6 +74,8 @@ robregcc_option(maxiter = 10000, tol = 1e-10, nlam = 100,
 \item{kfold}{nummber of folds for crossvalidation}
 
 \item{fullpath}{1/0 to get full path yes/no}
+
+\item{sigmafac}{multiplying factor for the range of standard deviation}
 }
 \value{
 a list of controling parameter.
@@ -64,8 +85,8 @@ The model approach use scaled lasoo approach for model selection.
 }
 \examples{
  
-library(robregcc)
 # default options
+library(robregcc)
 control_default = robregcc_option()
 # manual options
 control_manual <- robregcc_option(maxiter=1000,tol = 1e-4,lminfac = 1e-7)
