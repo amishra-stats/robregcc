@@ -3,7 +3,7 @@
 R code for simulation studies and gut microbiome data analysis in the paper ["Robust regression with compositional covariates" by Aditya Mishra and Christian L. M&uuml;ller](https://arxiv.org/abs/1909.04990).
 
 
-## Model evaluation
+## Manuscript simulation and application 
 #### Simulation scripts
 **simulated_example_robust_analysis.R** - generates all the simulation settings (each setting is replicated 100 times) and computes the robust and non-robust model parameters estimate for a single replication. In addition, it also generates Figure 2 and model performance statistics for Table 2 and Figure 3.
 
