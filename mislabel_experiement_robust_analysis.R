@@ -9,12 +9,17 @@
 
 
 rm(list = ls())
-# Load data
-load("../HIV_data/sCD14wC.rda")         # Load data for estimation
+
+# # Load data
+data_url = "https://github.com/amishra-stats/robregcc/raw/master/sCD14wC.rds"
+download.file(data_url, destfile='temp.rds')
+load("temp.rds") 
+# load("../HIV_data/sCD14wC.rda")         # Load data for estimation
 
 ## Install and load the package "robregcc" from CRAN/GitHub
 library(devtools)
 # devtools::install_github("amishra-stats/robregcc/robregcc")
+# install.packages("robregcc")
 library(robregcc)
 
 ## Load required packages
@@ -23,6 +28,8 @@ require(ggplot2)
 require(reshape2)
 library(magrittr)
 library(graphics)
+
+
 
 C <- matrix(1,nrow = 1, ncol = 60)
 
