@@ -72,8 +72,7 @@ b1 = 0.25; cc1 =  2.937
 # Initialization [PSC analysis for compositional data]
 control <- robregcc_option(maxiter = 1000,
  tol = 1e-4,lminfac = 1e-7)
-fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1,
-cc1 = cc1,C,bw,1,control) 
+# fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1, cc1 = cc1,C,bw,1,control) 
 
 }
 \references{

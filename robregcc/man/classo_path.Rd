@@ -41,6 +41,6 @@ C <- cbind(0,C)                           # accounting for intercept in constrai
 bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
 
 # Non-robust regression
-control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)
-fit.path <- classo_path(Xt, y, C, we = bw, control = control)
+# control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)
+# fit.path <- classo_path(Xt, y, C, we = bw, control = control)
 }

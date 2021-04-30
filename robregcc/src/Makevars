@@ -19,9 +19,10 @@
 ## PKG_CPPFLAGS, and additional compiler flags by setting PKG_CFLAGS,
 ## PKG_CXXFLAGS and PKG_FFLAGS, for C, C++, or FORTRAN
 
-
-PKG_CXXFLAGS = -I../inst/include 
+PKG_CXXFLAGS = -I../inst/include
 PKG_LIBS= $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+CXX_STD = CXX11
+
 # PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 # PKG_CPPFLAGS = -I../inst/include/
 # FLIBS=-L/usr/local/gfortran/lib/gcc/x86_64-apple-darwin15/6.1.0 -L/usr/local/gfortran/lib -lgfortran -lquadmath -lm

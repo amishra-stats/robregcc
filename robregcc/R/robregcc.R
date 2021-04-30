@@ -1,6 +1,123 @@
 if (getRversion() >= "3.5.0") utils::globalVariables(c("."))
 
 
+#' Simulation data with mis-specified model parameters 
+#'
+#' Simulate data for the robust regression with compositional covariates with mis-specified model parameters
+#'
+#' @param n sample size
+#' @param betacc model parameter satisfying compositional covariates
+#' @param beta0 intercept 
+#' @param O number of outlier
+#' @param Sigma covariance matrix of simulated predictors
+#' @param levg 1/0 whether to include leveraged observation or not
+#' @param snr noise to signal ratio
+#' @param betacm model parameter satisfying compositional covariates mis-specified
+#' @param m test sample size
+#' @param C subcompositional matrix
+#' @param out list for obtaining output with simulated data structure
+#' @return a list containing simulated output.
+#' @importFrom MASS mvrnorm
+#' @importFrom stats rnorm
+#' @import magrittr
+#' @importFrom stats sd
+#' @export
+#' @examples  
+#' ## Simulation example:
+#' library(robregcc)
+#' library(magrittr)
+#' 
+#' ## n: sample size 
+#' ## p: number of predictors
+#' ## o: fraction of observations as outliers
+#' ## L: {0,1} => leveraged {no, yes}, 
+#' ## s: multiplicative factor 
+#' ## ngrp: number of subgroup in the model 
+#' ## snr: noise to signal ratio for computing true std_err
+#' 
+#' ## Define parameters to simulate example
+#' p <- 80                # number of predictors  
+#' n <- 300               # number of sample   
+#' O <- 0.10*n            # number of outlier
+#' L <- 1                             
+#' s <- 8                          
+#' ngrp <- 4              # number of sub-composition
+#' snr <- 3               # Signal to noise ratio
+#' example_seed <- 2*p+1  # example seed
+#' set.seed(example_seed) 
+
+#' # Simulate subcomposition matrix
+#' C1 <- matrix(0,ngrp,23)
+#' tind <- c(0,10,16,20,23)
+#' for (ii in 1:ngrp)
+#'   C1[ii,(tind[ii] + 1):tind[ii + 1]] <- 1
+#' C <- matrix(0,ngrp,p)
+#' C[,1:ncol(C1)] <- C1            
+#' # model parameter beta
+#' beta0 <- 0.5
+#' beta <- c(1, -0.8, 0.4, 0, 0, -0.6, 0, 0, 0, 0, -1.5, 0, 1.2, 0, 0, 0.3)
+#' beta <- c(beta,rep(0,p - length(beta)))
+#' # mis-specified model parameter
+#' betam <- c(-1.8, -0.0, 0.0, 0, 0.9, 0.9, 0, 0, 0, 0, -1.5, 0, 1.2, 0, 0, 0.3)
+#' betam <- c(betam,rep(0,p - length(betam)))
+#' # Simulate response and predictor, i.e., X, y
+#' Sigma  <- 1:p %>% outer(.,.,'-') %>% abs(); Sigma  <- 0.5^Sigma
+#' data.case <- vector("list",1)
+#' set.seed(example_seed)
+#' data.case <- robregcc_sim2(n,beta,beta0,betam, O = O,Sigma,levg = L, 
+#' snr,0, C,out = data.case)
+#' data.case$C <- C                         
+#' # We have saved a copy of simulated data in the package 
+#' # with name simulate_robregcc 
+#' # simulate_robregcc = data.case;
+#' # save(simulate_robregcc, file ='data/simulate_robregcc.rda')
+#' 
+#' X <- data.case$X                 # predictor matrix
+#' y <- data.case$y                 # model response 
+#' 
+#' 
+#' @references
+#' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration.} arXiv:1909.04990.
+robregcc_sim2 = function (n, betacc,  beta0, betacm, O, Sigma, 
+                          levg, snr, m, C, out = list()) {
+  out$p <- length(betacc)
+  out$beta <- betacc
+  out$n <- n
+  out$L <- levg
+  out$O <- O
+  x <- exp(MASS::mvrnorm(n, c(rep(log(out$p/2), 5), rep(0, 
+                                                        out$p - 5)), Sigma))
+  if (out$L == 1) {
+    x[1:round(out$O/2), ] <- getLevObs(x, round(out$O/2), 
+                                       C)
+  }
+  x <- x %>% apply(1, function(x) x/sum(x)) %>% t() %>% log()
+  y <- beta0 + tcrossprod(x, t(betacc))
+  sigma <- 1
+  sigma <- norm(y, "2")/sqrt(n)/snr
+  out$shift <- c(sign(y[1:out$O]) * out$shft * sigma, rep(0, 
+                                                          n - out$O))
+  y <- y + sigma * rnorm(n)
+  out$yo <- y
+  y[1:out$O]  <- beta0 + tcrossprod(x[1:out$O,], t(betacm))
+  out$sigma <- sigma
+  out$SNR <- snr
+  out$y <- y
+  out$X <- x
+  if (m > 0) {
+    x <- exp(MASS::mvrnorm(m, c(rep(log(out$p/2), 5), rep(0, 
+                                                          out$p - 5)), Sigma))
+    out$Xte <- x %>% apply(1, function(x) x/sum(x)) %>% t() %>% 
+      log()
+    out$Yte <- beta0 + tcrossprod(out$Xte, t(betacc)) + sigma * 
+      rnorm(m)
+  }
+  return(out)
+}
+
+
+
+
 #' Simulation data
 #'
 #' Simulate data for the robust regression with compositional covariates
@@ -220,8 +337,8 @@ robregcc_option <- function(maxiter = 10000, tol = 1e-10, nlam = 100,
 #' bw <- c(0,rep(1,p))                       # weight matrix to not penalize intercept 
 #' 
 #' # Non-robust regression
-#' control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)
-#' fit.path <- classo_path(Xt, y, C, we = bw, control = control)
+#' # control <- robregcc_option(maxiter = 5000, tol = 1e-7, lminfac = 1e-12)
+#' # fit.path <- classo_path(Xt, y, C, we = bw, control = control)
 classo_path <- function(Xt, y, C, we = NULL, control = list()) {
   ## centered Xt and centered y provided
   p <- ncol(Xt)
@@ -369,8 +486,7 @@ classo <- function(Xt, y, C, we = NULL,
 #' # Initialization [PSC analysis for compositional data]
 #' control <- robregcc_option(maxiter = 1000,
 #'  tol = 1e-4,lminfac = 1e-7)
-#' fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1,
-#' cc1 = cc1,C,bw,1,control) 
+#' # fit.init <- cpsc_sp(Xt, y,alp = 0.4, cfac = 2, b1 = b1, cc1 = cc1,C,bw,1,control) 
 #' 
 #' @references
 #' Mishra, A., Mueller, C.,(2019) \emph{Robust regression with compositional covariates. In prepration}. arXiv:1909.04990.
@@ -694,7 +810,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
   out$cver <- ermat2
   
   
-  out$gind <- ((apply(abs(out$gammapath) > 0, 2, sum) != 0) *
+  out$gind <- ((apply(abs(out$gammapath) > 0, 2, sum) != 0) +
                  (apply(abs(out$betapath) > 0, 2, sum) != 0)) != 0
   avger <- apply(ermat2, 2, mean, na.rm = T)
   avger <- avger * out$gind
@@ -714,6 +830,7 @@ robregcc_sp <- function(X, y, C, beta.init = NULL, gamma.init = NULL,
   out$residuals0 <- drop(y) - X %*% out$beta0
   out$inlier0 <- abs(out$gamma0) < 0.01
   
+  # save(list = ls(), file = 'aditya.rda')
   
   ## sanity check
   control <- robregcc_option(maxiter = 500,tol = 1e-6,
